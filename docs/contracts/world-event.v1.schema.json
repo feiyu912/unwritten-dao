@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unwritten-dao.dev/contracts/world-event.v1.schema.json",
+  "title": "WorldEvent",
+  "description": "An immutable fact committed by the simulator. Events are the authoritative history and the source material for memory and narrative.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "world_id",
+    "tick",
+    "type",
+    "actor_ids",
+    "target_ids",
+    "location_id",
+    "causal_parent_ids",
+    "rng_seed",
+    "command_id",
+    "state_version_after",
+    "payload"
+  ],
+  "properties": {
+    "schema_version": { "const": "world-event.v1" },
+    "event_id": { "type": "integer", "minimum": 1 },
+    "world_id": { "type": "string", "format": "uuid" },
+    "tick": { "type": "integer", "minimum": 0 },
+    "type": {
+      "enum": [
+        "WORLD_ADVANCED",
+        "NPC_MOVED",
+        "CULTIVATION_STARTED",
+        "CULTIVATION_COMPLETED",
+        "BREAKTHROUGH_ATTEMPT",
+        "NPC_DIED",
+        "ITEM_TRANSFERRED",
+        "ITEM_CONSUMED",
+        "LOCATION_INVESTIGATED",
+        "SECRET_REALM_DISCOVERED",
+        "SECRET_REALM_ENTERED",
+        "SECRET_REALM_CLOSED",
+        "OPPORTUNITY_CLAIMED",
+        "OPPORTUNITY_EXPIRED",
+        "COMBAT_RESOLVED",
+        "RELATIONSHIP_CHANGED",
+        "BELIEF_ACQUIRED",
+        "FACTION_UPDATED",
+        "KNOWLEDGE_ACQUIRED"
+      ]
+    },
+    "actor_ids": {
+      "type": "array",
+      "items": { "type": "string", "format": "uuid" },
+      "uniqueItems": true
+    },
+    "target_ids": {
+      "type": "array",
+      "items": { "type": "string", "format": "uuid" },
+      "uniqueItems": true
+    },
+    "location_id": { "type": ["string", "null"] },
+    "causal_parent_ids": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 1 },
+      "uniqueItems": true
+    },
+    "rng_seed": { "type": "integer", "minimum": 0, "maximum": 9223372036854775807 },
+    "command_id": { "type": ["string", "null"], "format": "uuid" },
+    "state_version_after": { "type": "integer", "minimum": 1 },
+    "payload": { "type": "object" }
+  }
+}

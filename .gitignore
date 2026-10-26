@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# Local runtime data
+data/
+*.sqlite3
+*.db
+
+# macOS
+.DS_Store
+
+# Unreal
+DerivedDataCache/
+Intermediate/
+Saved/
+Binaries/
+.vs/
+*.uprojectdirs
+
+# Local tool state
+.worktrees/

@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unwritten-dao.dev/contracts/world-command.v1.schema.json",
+  "title": "WorldCommand",
+  "description": "A validated intent submitted to the authoritative simulator. The simulator validates all preconditions before mutating state.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "command_id",
+    "idempotency_key",
+    "world_id",
+    "actor_id",
+    "issued_tick",
+    "expected_state_version",
+    "type",
+    "arguments",
+    "source"
+  ],
+  "properties": {
+    "schema_version": { "const": "world-command.v1" },
+    "command_id": { "type": "string", "format": "uuid" },
+    "idempotency_key": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "world_id": { "type": "string", "format": "uuid" },
+    "actor_id": { "type": ["string", "null"], "format": "uuid" },
+    "issued_tick": { "type": "integer", "minimum": 0 },
+    "expected_state_version": { "type": "integer", "minimum": 0 },
+    "type": {
+      "enum": [
+        "advance_time",
+        "wait",
+        "move",
+        "start_cultivation",
+        "attempt_breakthrough",
+        "transfer_item",
+        "investigate",
+        "enter_secret_realm",
+        "claim_opportunity",
+        "attack"
+      ]
+    },
+    "arguments": { "type": "object" },
+    "source": { "enum": ["player", "agent", "system", "replay", "test"] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "advance_time" } }, "required": ["type"] },
+      "then": { "properties": { "arguments": { "$ref": "#/$defs/advanceTimeArgs" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "wait" } }, "required": ["type"] },
+      "then": { "properties": { "arguments": { "$ref": "#/$defs/waitArgs" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "move" } }, "required": ["type"] },
+      "then": {
+        "properties": {
+          "actor_id": { "type": "string", "format": "uuid" },
+          "arguments": { "$ref": "#/$defs/moveArgs" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "start_cultivation" } },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "actor_id": { "type": "string", "format": "uuid" },
+          "arguments": { "$ref": "#/$defs/cultivationArgs" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "attempt_breakthrough" } },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "actor_id": { "type": "string", "format": "uuid" },
+          "arguments": { "$ref": "#/$defs/breakthroughArgs" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "transfer_item" } }, "required": ["type"] },
+      "then": {
+        "properties": {
+          "actor_id": { "type": "string", "format": "uuid" },
+          "arguments": { "$ref": "#/$defs/transferArgs" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "investigate" } }, "required": ["type"] },
+      "then": {
+        "properties": {
+          "actor_id": { "type": "string", "format": "uuid" },
+          "arguments": { "$ref": "#/$defs/investigateArgs" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "enter_secret_realm" } },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "actor_id": { "type": "string", "format": "uuid" },
+          "arguments": { "$ref": "#/$defs/enterRealmArgs" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "claim_opportunity" } },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "actor_id": { "type": "string", "format": "uuid" },
+          "arguments": { "$ref": "#/$defs/claimOpportunityArgs" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "attack" } }, "required": ["type"] },
+      "then": {
+        "properties": {
+          "actor_id": { "type": "string", "format": "uuid" },
+          "arguments": { "$ref": "#/$defs/attackArgs" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "entityRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "enum": ["npc", "location"] },
+        "id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "advanceTimeArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ticks"],
+      "properties": { "ticks": { "type": "integer", "minimum": 1, "maximum": 3650 } }
+    },
+    "waitArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ticks"],
+      "properties": { "ticks": { "type": "integer", "minimum": 1, "maximum": 365 } }
+    },
+    "moveArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["to_location_id"],
+      "properties": { "to_location_id": { "type": "string", "minLength": 1 } }
+    },
+    "cultivationArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["days"],
+      "properties": { "days": { "type": "integer", "minimum": 1, "maximum": 365 } }
+    },
+    "breakthroughArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "pill_item_id": { "type": "string", "minLength": 1 } }
+    },
+    "transferArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_id", "from", "to"],
+      "properties": {
+        "item_id": { "type": "string", "minLength": 1 },
+        "from": { "$ref": "#/$defs/entityRef" },
+        "to": { "$ref": "#/$defs/entityRef" }
+      }
+    },
+    "investigateArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_location_id"],
+      "properties": {
+        "target_location_id": { "type": "string", "minLength": 1 },
+        "focus": { "enum": ["secret_realm", "person", "item", "rumor"] }
+      }
+    },
+    "enterRealmArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["realm_id"],
+      "properties": { "realm_id": { "type": "string", "minLength": 1 } }
+    },
+    "claimOpportunityArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["opportunity_id"],
+      "properties": { "opportunity_id": { "type": "string", "minLength": 1 } }
+    },
+    "attackArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_id", "intent"],
+      "properties": {
+        "target_id": { "type": "string", "format": "uuid" },
+        "intent": { "enum": ["kill", "subdue", "rob"] }
+      }
+    }
+  }
+}

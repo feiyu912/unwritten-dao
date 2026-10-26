@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "world-core"
+version = "0.1.0"
+description = "Deterministic authoritative world simulation"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "pydantic>=2.9",
+    "pyyaml>=6.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/world_core"]

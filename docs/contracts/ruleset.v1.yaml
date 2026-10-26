@@ -1,0 +1,136 @@
+schema_version: ruleset.v1
+ruleset_version: "1.0.0"
+notes: >
+  Design baseline for the MVP. Numeric values are balance targets, not measured
+  or canonical xianxia facts. All randomness must be derived from a seeded,
+  counter-based RNG keyed by (world_seed, tick, entity, purpose).
+
+time:
+  seconds_per_tick: 86400
+  ticks_per_year: 365
+  start_year: 0
+
+realms:
+  - realm: 0
+    name: 凡人
+    base_life_years: 80
+    base_qi_per_day: 0
+    stages: 1
+    qi_to_next: 0
+    difficulty: 0.0
+  - realm: 1
+    name: 炼气
+    base_life_years: 120
+    base_qi_per_day: 6
+    stages: 9
+    qi_per_stage: 260
+    difficulty: 0.0
+  - realm: 2
+    name: 筑基
+    base_life_years: 240
+    base_qi_per_day: 12
+    stages: 3
+    qi_per_stage: 3200
+    difficulty: 1.0
+  - realm: 3
+    name: 金丹
+    base_life_years: 500
+    base_qi_per_day: 24
+    stages: 3
+    qi_per_stage: 18000
+    difficulty: 2.0
+  - realm: 4
+    name: 元婴
+    base_life_years: 1000
+    base_qi_per_day: 48
+    stages: 3
+    qi_per_stage: 90000
+    difficulty: 3.0
+
+cultivation:
+  aptitude_factor: "0.6 + 0.8 * aptitude"
+  environment_aura:
+    town: 0.8
+    sect: 1.1
+    wilderness: 0.7
+    secret_realm: 2.0
+  technique_multiplier:
+    basic: 1.0
+    sect: 1.25
+    rare: 1.6
+  health_factor: "0.5 + 0.5 * health"
+
+breakthrough:
+  formula: logistic
+  intercept: -2.5
+  weights:
+    aptitude: 1.6
+    foundation: 1.2
+    pill: 0.9
+    insight: 0.6
+    support: 0.4
+    injury: -1.2
+    difficulty: -0.35
+  probability_clip: [0.02, 0.95]
+  failure:
+    health_loss: [0.15, 0.45]
+    death_probability: 0.05
+  pill:
+    foundation_pill:
+      quality: 1.0
+      qi_bonus: 400
+
+lifespan:
+  aging_damage_per_decade_after_lifespan: 0.25
+  natural_death_check: end_of_tick
+
+companionship:
+  max_memories_in_prompt: 8
+  recall_top_k: 5
+  score_weights:
+    semantic: 0.45
+    recency: 0.2
+    importance: 0.2
+    person: 0.1
+    causal: 0.05
+
+combat:
+  power: "realm_multiplier * technique * gear * health * situation"
+  realm_multiplier: [0.2, 1.0, 4.0, 16.0, 64.0]
+  sigmoid_k: 2.0
+  outcomes: [victory, defeat, escaped, injured, captured, death]
+  injury_health_loss: [0.2, 0.6]
+
+opportunity:
+  weights:
+    aptitude: 1.0
+    knowledge: 1.0
+    luck: 1.0
+    readiness: 1.0
+  max_probability: 0.95
+  protagonist_luck: 1.7
+  condition_timeout_ticks: 3650
+
+economy:
+  tick_interval_days: 30
+  sect_income_base: 120
+  sect_upkeep_per_member: 6
+  pill_price: 380
+  map_fragment_value: 60
+
+agents:
+  major_npc_count: 6
+  llm_temperature: 0.2
+  max_repair_attempts: 1
+  decision_timeout_seconds: 20
+  proposal_valid_ticks: 7
+
+memory:
+  default_embedding_dim: 768
+  importance_floor: 0.05
+  recent_event_window: 12
+
+world:
+  npc_count: 30
+  faction_count: 2
+  default_seed: 42

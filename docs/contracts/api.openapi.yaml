@@ -1,0 +1,315 @@
+openapi: 3.1.0
+info:
+  title: Unwritten Dao World API
+  version: "1.0.0"
+  description: >
+    Versioned contract between the authoritative world server and any client.
+    Clients submit commands and read authoritative state; they never simulate
+    training, combat, death, or ownership locally.
+servers:
+  - url: http://127.0.0.1:8000
+paths:
+  /v1/health:
+    get:
+      operationId: health
+      responses:
+        "200":
+          description: Service and database status
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, world_loaded]
+                properties:
+                  status: { type: string, enum: [ok, degraded] }
+                  world_loaded: { type: boolean }
+
+  /v1/world/snapshot:
+    get:
+      operationId: getWorldSnapshot
+      responses:
+        "200":
+          description: Current authoritative snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "./world-snapshot.v1.schema.json"
+
+  /v1/world/events:
+    get:
+      operationId: listWorldEvents
+      parameters:
+        - name: after
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 1000, default: 200 }
+        - name: type
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Events ordered by event_id
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [events]
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: "./world-event.v1.schema.json"
+
+  /v1/npcs/{npc_id}:
+    get:
+      operationId: getNpc
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Public authoritative NPC state
+          content:
+            application/json:
+              schema:
+                type: object
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/npcs/{npc_id}/observation:
+    get:
+      operationId: getNpcObservation
+      description: Knowledge-bounded observation; never includes hidden truth.
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Observation for the NPC
+          content:
+            application/json:
+              schema:
+                $ref: "./npc-observation.v1.schema.json"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/commands:
+    post:
+      operationId: submitCommand
+      description: >
+        Submit an idempotent world command. Expected state version must match;
+        stale commands are rejected with 409. LLM-authored proposals must be
+        validated before reaching this endpoint.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./world-command.v1.schema.json"
+      responses:
+        "200":
+          description: Command applied; returns events and the new state version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /v1/agents/{npc_id}/decision:
+    post:
+      operationId: requestDecision
+      description: Ask the agent runtime for a validated ActionProposal.
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [observation]
+              properties:
+                observation:
+                  $ref: "./npc-observation.v1.schema.json"
+      responses:
+        "200":
+          description: Validated proposal or a documented fallback
+          content:
+            application/json:
+              schema:
+                $ref: "./action-proposal.v1.schema.json"
+        "422":
+          description: Proposal could not be validated; fallback applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /v1/dialogue:
+    post:
+      operationId: dialogue
+      description: Bounded in-character dialogue; returns text plus any proposal.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [npc_id, player_id, message]
+              properties:
+                npc_id: { type: string, format: uuid }
+                player_id: { type: string, format: uuid }
+                message: { type: string, maxLength: 2000 }
+      responses:
+        "200":
+          description: Dialogue response
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [reply_text, proposal]
+                properties:
+                  reply_text: { type: string }
+                  proposal:
+                    oneOf:
+                      - $ref: "./action-proposal.v1.schema.json"
+                      - type: "null"
+        "422":
+          $ref: "#/components/responses/BadRequest"
+
+  /v1/saves:
+    post:
+      operationId: createSave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label: { type: string, maxLength: 120 }
+      responses:
+        "201":
+          description: Save created from a checksummed snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [save_id, snapshot_id, tick, checksum]
+                properties:
+                  save_id: { type: string, format: uuid }
+                  snapshot_id: { type: string, format: uuid }
+                  tick: { type: integer }
+                  checksum: { type: string }
+
+  /v1/saves/{save_id}/load:
+    post:
+      operationId: loadSave
+      parameters:
+        - name: save_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: State restored; subsequent events start after the save's snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "./world-snapshot.v1.schema.json"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/debug/causality/{event_id}:
+    get:
+      operationId: getCausality
+      description: Upstream causal chain for an event (debug/MVP inspection).
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - name: depth
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 20, default: 8 }
+      responses:
+        "200":
+          description: Causal chain
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [root_event_id, events, edges]
+                properties:
+                  root_event_id: { type: integer }
+                  events:
+                    type: array
+                    items:
+                      $ref: "./world-event.v1.schema.json"
+                  edges:
+                    type: array
+                    items:
+                      type: object
+                      required: [parent_event_id, child_event_id, relation]
+                      properties:
+                        parent_event_id: { type: integer }
+                        child_event_id: { type: integer }
+                        relation: { type: string }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+x-websocket:
+  /v1/events/stream:
+    description: >
+      WebSocket stream. Server sends {"kind":"event","event":WorldEvent} frames
+      ordered by event_id; on connect the client may pass ?after=<event_id>.
+      Clients must tolerate reconnects and resume from their last event_id.
+
+components:
+  responses:
+    BadRequest:
+      description: Invalid or rejected command
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Conflict:
+      description: Stale state version or idempotency conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details: { type: object }
+    CommandResult:
+      type: object
+      required: [accepted, state_version, events]
+      properties:
+        accepted: { type: boolean }
+        state_version: { type: integer }
+        events:
+          type: array
+          items:
+            $ref: "./world-event.v1.schema.json"

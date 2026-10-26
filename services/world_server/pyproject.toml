@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "world-server"
+version = "0.1.0"
+description = "HTTP/WebSocket world server and PostgreSQL persistence"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "world-core",
+    "agent-runtime",
+    "alembic>=1.14",
+    "fastapi>=0.115",
+    "psycopg[binary]>=3.2",
+    "pydantic>=2.9",
+    "sqlalchemy>=2.0",
+    "uvicorn[standard]>=0.32",
+]
+
+[tool.uv.sources]
+world-core = { workspace = true }
+agent-runtime = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/world_server"]

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unwritten-dao.dev/contracts/world-snapshot.v1.schema.json",
+  "title": "WorldSnapshot",
+  "description": "A complete, checksummed capture of authoritative world state at a tick.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "world_id",
+    "tick",
+    "last_event_id",
+    "state_version",
+    "world_seed",
+    "sim_version",
+    "ruleset_version",
+    "checksum",
+    "state"
+  ],
+  "properties": {
+    "schema_version": { "const": "world-snapshot.v1" },
+    "world_id": { "type": "string", "format": "uuid" },
+    "tick": { "type": "integer", "minimum": 0 },
+    "last_event_id": { "type": "integer", "minimum": 0 },
+    "state_version": { "type": "integer", "minimum": 0 },
+    "world_seed": { "type": "integer", "minimum": 0 },
+    "sim_version": { "type": "string", "minLength": 1 },
+    "ruleset_version": { "type": "string", "minLength": 1 },
+    "checksum": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "state": { "type": "object" }
+  }
+}
