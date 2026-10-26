@@ -37,8 +37,7 @@ IMPORTANT = {
 def run(*, days: int, seed: int) -> dict[str, object]:
     state = create_world(seed)
     policy = UtilityPolicy()
-    important = 0
-    covered = 0
+    important_records: list[tuple[str, bool]] = []
     event_types: dict[str, int] = {}
     for _ in range(days):
         for npc in sorted(state.npcs.values(), key=lambda item: item.npc_id):
@@ -51,18 +50,24 @@ def run(*, days: int, seed: int) -> dict[str, object]:
             for event in result.events:
                 event_types[event.type] = event_types.get(event.type, 0) + 1
                 if event.type in IMPORTANT:
-                    important += 1
-                    covered += 1 if event.causal_parent_ids else 0
+                    important_records.append((event.type, bool(event.causal_parent_ids)))
         result = advance_time(state, 1)
         for event in result.events:
             event_types[event.type] = event_types.get(event.type, 0) + 1
             if event.type in IMPORTANT:
-                important += 1
-                covered += 1 if event.causal_parent_ids else 0
+                important_records.append((event.type, bool(event.causal_parent_ids)))
     protagonist = state.npcs[
         next(npc.npc_id for npc in state.npcs.values() if npc.canonical_role == "protagonist")
     ]
+    important = len(important_records)
+    covered = sum(1 for _, has_parent in important_records if has_parent)
     coverage = (covered / important) if important else 1.0
+    outcomes = [record for record in important_records if record[0] != "ITEM_TRANSFERRED"]
+    outcome_covered = sum(1 for _, has_parent in outcomes if has_parent)
+    outcome_coverage = (outcome_covered / len(outcomes)) if outcomes else 1.0
+    transfers = [record for record in important_records if record[0] == "ITEM_TRANSFERRED"]
+    transfer_covered = sum(1 for _, has_parent in transfers if has_parent)
+    transfer_coverage = (transfer_covered / len(transfers)) if transfers else 1.0
     goal_counts: dict[str, int] = {}
     for npc in state.npcs.values():
         for goal in npc.goals:
@@ -74,6 +79,8 @@ def run(*, days: int, seed: int) -> dict[str, object]:
         "important_events": important,
         "covered_events": covered,
         "coverage": round(coverage, 4),
+        "outcome_coverage": round(outcome_coverage, 4),
+        "transfer_coverage": round(transfer_coverage, 4),
         "goals": [(goal.kind, goal.status) for goal in protagonist.goals],
         "goal_counts": goal_counts,
         "resolved_goal_persistence": persistence,

@@ -23,7 +23,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | History dashboard | self-contained HTML (region map, NPC/faction state, causal timeline, story threads); rendered and checked in Chrome | verified |
 | DB-backed dashboard | reads 21,897 persisted events from PostgreSQL and renders the same world | verified |
 | Story threads | narrative director backtracks real causal parents into ranked multi-event threads; false invention impossible by construction | verified |
-| 20-year persisted history | `tools/seed_history.py`: agent-driven, **~4–8 s**, 21,897 events, 7,042 memories, API reloads at tick 7300 | verified |
+| 20-year persisted history | `tools/seed_history.py`: agent-driven, **~4–8 s**, 21,897 events, 7,042 memories, API reloads at tick 7300 | verified before the latest state-schema change; reseed required |
 | Database size target | seeded 20-year agent history: **~19.5 MB** total (< 1 GB) | verified |
 | PostgreSQL persistence | 22 integration tests against real pgvector PostgreSQL 17 | verified |
 | Idempotency & concurrency | two threads race one version: exactly one writer, one stale; duplicate key returns stored result; command_id reuse → 409 | verified |
@@ -32,6 +32,10 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | WebSocket stream | live frame delivery plus resume from an `after` cursor; event pagination matches | verified |
 | API contract conformance | every OpenAPI operation implemented; live snapshot/event/observation/decision responses validate JSON Schemas | verified |
 | Agent tiering | 6 major roles use the LLM path; otherwise RivalryPolicy (subdue on sight) for majors, UtilityPolicy for background | verified |
+| Pluggable decision model | DecisionModelPolicy + scoring/value protocols + legal mask + JSON decision records; no training | verified |
+| Goal evolution | revenge after a killer's act, defeat_rival completion, persistent goals across 200+ ticks | verified |
+| Knowledge boundary | fact/belief/private/memory separation, redaction, cited action explanations | verified |
+| UE5 pre-editor kit | deterministic layout JSON (8 locations, 30 NPCs), scene plan, licenses, editor checklist; no UE validation | verified |
 | LLM proposal pipeline | strict JSON parsing, identity binding, one repair, audit rows, replay mode; simulator rejection triggers one Utility fallback | verified with mock; real-model legality rate unmeasured |
 | Provider HTTP adapters | OpenAI-compatible decision and embedding endpoints exercised over real localhost HTTP with a stub server | verified (no real model) |
 | Episodic memory | events → `memory_episode` in the command transaction; top-5 retrieval into prompt | verified |
@@ -50,9 +54,8 @@ excluded from the fast suite).
 
 ## Not verified (requires other hardware or services)
 
-1. **UE5 client** — C++ scaffold, docs, and a tested headless mock exist, but the project has not
-   been compiled, opened in the editor, packaged, or measured for FPS/1% low. No Unreal install
-   on this machine.
+1. **UE5 client** — scaffold, deterministic scene layout, docs, and a tested headless mock exist,
+   but the project has not been compiled, opened, packaged, or measured for FPS/1% low.
 2. **Real model latency/quality** — the OpenAI-compatible path is unit-tested with a mock
    transport; no live endpoint was called. TTFT, cost, and dialogue quality targets are unmeasured.
 3. **Semantic memory quality** — pgvector storage, HNSW index, and SQL cosine retrieval are

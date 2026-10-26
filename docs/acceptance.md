@@ -15,8 +15,8 @@ evidence exists yet.
 | 6 | ≥99.5% proposals accepted or safely rejected with fallback | PARTIAL | 20/20 synthetic impossible plans rejected and fallback applied; real LLM rate not measured |
 | 7 | Unsupported world facts <1% | NOT RUN | requires a live model and human audit |
 | 8 | Memory Recall@5 ≥90% | PARTIAL | 10/10 toy labels and 8/8 real-history labels; real embedding model not measured |
-| 9 | ≥95% important events have upstream causes | PASS | 400-day report: 4/4 = 100%; goldens cover chains |
-| 10 | ≥80% long-term goals reach resolution or causal replanning | PARTIAL | 1/1 resolved goal achieved; single-goal sample |
+| 9 | ≥95% important events have upstream causes | PARTIAL | strict outcome events 3/3 = 100%; all important incl. transfers 3/4 = 75% (transfers lack intent provenance) |
+| 10 | ≥80% long-term goals reach resolution or causal replanning | PARTIAL | lifecycle rules added (revenge, target death); resolved sample still 1/1 |
 | 11 | 30 NPC × 20 years <10 minutes headless | PASS | 0.06 s (rules), 1.9 s (agent loop), 4.15 s (persisted) |
 | 12 | 20-year event storage <1 GB | PASS | 21,897 events / 7,042 memories / 19.4 MB (seeded) |
 | 13 | 1080p ≥60 FPS / 1% low ≥45 | NOT RUN | no Unreal Engine on the development machine |
@@ -34,17 +34,17 @@ evidence exists yet.
 | R2 memory + LLM agents | PARTIAL | LLM policy, audit, replay, memory, dialogue verified with mock providers; 3D interaction not built |
 | R3 playable MVP | PARTIAL | Headless play CLI, history dashboard, HTTP playthrough, save/load, causal queries; UE5 client unvalidated |
 
-## Latest verification (2026-10-26, local + GitHub CI)
+## Latest verification (2026-10-26, after the parallel round)
 
-- Fast suite, PostgreSQL integration suite, and the 100k-event slow test: all green.
-- 20-year rules benchmark: 0.121 s, 569 events, state valid.
-- 400-day causal report: coverage 1.0; goals {active: 29, achieved: 1};
-  resolved-goal persistence 1.0; no invariant violations.
-- 20-year fate test: baseline realm 2 with the map; stolen-map world realm 1,
-  no discovery, checksums diverge.
-- Persisted 20-year history: 7.69 s, 21,897 events, 7,042 memories, 19.5 MB.
-- DB-backed dashboard: rendered from 21,897 persisted events.
-- CI run `40293263312`: macOS ARM64, Ubuntu x86_64, PostgreSQL integration all green.
+- Fast suite (decision model, knowledge boundary, UE scene layout, updated golden): green.
+- PostgreSQL integration suite: 35 tests green.
+- Strict causality: outcome events 3/3 = 100%; all important events incl. transfers 3/4 = 75%.
+  Transfers deliberately have no parent rather than a fabricated "previous event".
+- Golden checksum updated to `sha256:2d7c576b…` after the provenance/goal state fields.
+- UE layout regenerated for the new state checksum (8 locations, 30 NPCs).
+- 20-year persisted numbers in this file predate the state-schema change; the local DB must be
+  reseeded with `tools.seed_history` before serving. No long benchmark was rerun in this round
+  per the lightweight-verification constraint.
 
 ## How to reproduce the PASS rows
 

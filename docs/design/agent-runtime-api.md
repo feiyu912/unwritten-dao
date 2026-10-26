@@ -92,6 +92,23 @@ The policy receives everything it needs from the observation; it must not import
 `worldgen` constants to cheat. Item semantics may be read from item `kind` and `properties`
 (e.g. `points_to`), not from hidden state.
 
+## DecisionModelPolicy (pluggable scoring, no training)
+
+`DecisionModelPolicy` selects tactical actions from generated candidates using a
+`DecisionModel` protocol (`score(observation, candidates)` + `value(observation)`). It records, per
+decision: the observation dump, strategic goal, candidates with legal mask and scores, chosen
+action, value estimate, and cited event ids (`PolicyDecisionRecord`). Illegal candidates are
+masked; all-illegal/model-error cases fall back to `UtilityPolicy` once. It never mutates state.
+`UtilityCandidateGenerator` is the baseline candidate source; future BC/RL models implement the
+same protocol without changing policies or the simulator.
+
+## Knowledge boundary
+
+`NpcKnowledgeView` separates authoritative facts, private state, fallible beliefs, and memories;
+`redact_unknown` removes ids the NPC does not know; `validate_boundary` checks secret interiors and
+hidden items. `explain_action` and `explain_event_chain` cite only real goals, memories, and
+causal parent ids.
+
 ## RivalryPolicy
 
 `RivalryPolicy` extends `UtilityPolicy`: if an active `defeat_rival` goal's target is visible
