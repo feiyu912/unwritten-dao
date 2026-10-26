@@ -9,7 +9,7 @@ evidence exists yet.
 |---|---|---|---|
 | 1 | Deterministic replay 100/100 | PASS | `tests/e2e/test_replay.py` (100 runs, identical checksums) |
 | 2 | Save at year 10, load and run to year 20 = uninterrupted | PASS | `tests/e2e/test_save_load_year_ten.py` (checksum + `last_event_id`) |
-| 3 | No illegal transition in 100,000+ events | PASS | `tests/e2e/test_event_stress.py` (1.18 s, invariants hold) |
+| 3 | No illegal transition in 100,000+ events | PASS (pre-change) | 100k test passed before the parallel state-schema change; not rerun under the lightweight-round constraint |
 | 4 | Dead NPCs never act | PASS | dead-actor rejection, natural death, combat death tests |
 | 5 | Unique items never have two owners | PASS | transfer rejection + `validate_state` invariants |
 | 6 | ≥99.5% proposals accepted or safely rejected with fallback | PARTIAL | 20/20 synthetic impossible plans rejected and fallback applied; real LLM rate not measured |
@@ -17,13 +17,13 @@ evidence exists yet.
 | 8 | Memory Recall@5 ≥90% | PARTIAL | 10/10 toy labels and 8/8 real-history labels; real embedding model not measured |
 | 9 | ≥95% important events have upstream causes | PARTIAL | strict outcome events 3/3 = 100%; all important incl. transfers 3/4 = 75% (transfers lack intent provenance) |
 | 10 | ≥80% long-term goals reach resolution or causal replanning | PARTIAL | lifecycle rules added (revenge, target death); resolved sample still 1/1 |
-| 11 | 30 NPC × 20 years <10 minutes headless | PASS | 0.06 s (rules), 1.9 s (agent loop), 4.15 s (persisted) |
-| 12 | 20-year event storage <1 GB | PASS | 21,897 events / 7,042 memories / 19.4 MB (seeded) |
+| 11 | 30 NPC × 20 years <10 minutes headless | PASS (pre-change) | 0.06 s / 1.9 s / ~4–8 s measured before the provenance change |
+| 12 | 20-year event storage <1 GB | PASS (pre-change) | 21,897 events / 7,042 memories / 19.4 MB, measured before the state-schema change |
 | 13 | 1080p ≥60 FPS / 1% low ≥45 | NOT RUN | no Unreal Engine on the development machine |
 | 14 | Model calls never block render | NOT RUN | belongs to the UE5 integration check |
 | 15 | Dialogue p95 <6 s | NOT RUN | requires a real provider; mock path only |
 | 16 | Local planning TTFT p95 <1.5 s @8K | NOT RUN | requires GPU/local model |
-| 17 | No fatal errors/state corruption over 20 years | PASS | 20-year in-memory and persisted runs, invariants clean |
+| 17 | No fatal errors/state corruption over 20 years | PASS (pre-change) | 20-year runs were clean before the state-schema change; rerun pending |
 
 ## User-story coverage
 

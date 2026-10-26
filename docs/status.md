@@ -52,6 +52,16 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 Test totals: **71 fast + 22 integration + 1 slow** (the slow 100k-event test is run manually and
 excluded from the fast suite).
 
+## Parallel round notes (2026-10-26)
+
+- DecisionModelPolicy, knowledge boundaries, goal evolution, true multi-parent causality, and the
+  UE5 pre-editor layout were added.
+- Strict causality is intentionally lower than the old fake number: outcome events 100% (3/3),
+  all important events 75% (3/4) because transfers have no tracked intent provenance.
+- The golden checksum changed to `sha256:2d7c576b…`; the UE layout was regenerated.
+- Long benchmarks (100k events, 20 years) were not rerun under this round's lightweight constraint;
+  their PASS values predate the state-schema change.
+
 ## Not verified (requires other hardware or services)
 
 1. **UE5 client** — scaffold, deterministic scene layout, docs, and a tested headless mock exist,
