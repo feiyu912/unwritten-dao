@@ -99,6 +99,7 @@ OBSERVATION_EXAMPLE = {
     },
     "inventory": [{"item_id": "item_map_fragment", "name": "残破洞府图", "kind": "map"}],
     "visible_items": [],
+    "visible_opportunities": [],
     "visible_npcs": [{"npc_id": NPC_B, "name": "苏芷", "realm": 2, "stage": 2, "alive": True}],
     "relationships": [
         {"npc_id": NPC_B, "affinity": 10, "trust": 20, "fear": 0, "respect": 15, "debt": 0}

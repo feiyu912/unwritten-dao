@@ -24,7 +24,8 @@ build_observation(
 ) -> NpcObservation
 ```
 - `self` from the NPC; `inventory` from owned items; `visible_items` from the current
-  location stash, excluding `hidden` items; `visible_npcs` from living NPCs at the same
+  location stash, excluding `hidden` items; `visible_opportunities` for unclaimed, unexpired
+  opportunities at the current location; `visible_npcs` from living NPCs at the same
   location (public fields only).
 - `relationships` are outgoing edges from this NPC. `beliefs` are only this NPC's beliefs.
   `known_locations` must never include locations the NPC does not know, and must never leak
@@ -56,8 +57,9 @@ decide_command(
     fallback: AgentPolicy | None = None,
     memories: Sequence[dict] = (),
     recent_events: Sequence[dict] = (),
-) -> WorldCommand
+) -> WorldCommand | None
 ```
+- Return `None` when the NPC is dead or already has an active action; the caller skips it.
 - Build observation, call policy, validate. On `ProposalRejected`, call one fallback
   (`UtilityPolicy` by default) exactly once; if that also fails, raise.
 - Never call a provider directly; `LLMPolicy` composes an `InferenceProvider`.
