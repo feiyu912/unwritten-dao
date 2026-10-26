@@ -88,7 +88,11 @@ def test_player_completes_the_realm_arc_over_http(client: TestClient) -> None:
             key=f"play:claim:{attempt}",
         )
         all_events += events
-        if any(event["type"] == "OPPORTUNITY_CLAIMED" and event["payload"]["success"] for event in events):
+        successful_claim = any(
+            event["type"] == "OPPORTUNITY_CLAIMED" and event["payload"]["success"]
+            for event in events
+        )
+        if successful_claim:
             claimed = True
             break
     assert claimed
