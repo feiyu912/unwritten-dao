@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import json
+import pathlib
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from jsonschema import Draft202012Validator, FormatChecker
 from world_server.app import create_app
 
 from world_core import (
@@ -13,6 +16,12 @@ from world_core import (
 )
 
 pytestmark = pytest.mark.integration
+ROOT = pathlib.Path(__file__).resolve().parents[3]
+
+
+def _contract(name: str) -> Draft202012Validator:
+    schema = json.loads((ROOT / "docs" / "contracts" / name).read_text(encoding="utf-8"))
+    return Draft202012Validator(schema, format_checker=FormatChecker())
 
 
 @pytest.fixture()
@@ -345,3 +354,22 @@ def test_websocket_streams_committed_events(client: TestClient) -> None:
         event = websocket.receive_json()
     assert event["event_id"] == response.json()["events"][0]["event_id"]
     assert event["type"] == "NPC_MOVED"
+
+
+def test_api_responses_validate_contracts(client: TestClient) -> None:
+    snapshot = client.get("/v1/world/snapshot")
+    assert snapshot.status_code == 200
+    _contract("world-snapshot.v1.schema.json").validate(snapshot.json())
+
+    events = client.get("/v1/world/events", params={"after": 0, "limit": 5}).json()["events"]
+    event_validator = _contract("world-event.v1.schema.json")
+    for event in events:
+        event_validator.validate(event)
+
+    observation = client.get(f"/v1/npcs/{PROTAGONIST_ID}/observation")
+    assert observation.status_code == 200
+    _contract("npc-observation.v1.schema.json").validate(observation.json())
+
+    decision = client.post(f"/v1/agents/{PROTAGONIST_ID}/decision")
+    assert decision.status_code == 200
+    _contract("action-proposal.v1.schema.json").validate(decision.json())

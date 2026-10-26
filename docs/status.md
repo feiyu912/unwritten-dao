@@ -22,6 +22,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Migration round trip | `alembic downgrade base` then `upgrade head` succeeds; same step runs in CI | verified |
 | Event log + causal query | `event_edge` persisted; `/v1/debug/causality/{id}` BFS | verified |
 | WebSocket stream | connected client receives a committed `NPC_MOVED` frame | verified |
+| API contract conformance | every OpenAPI operation implemented; live snapshot/event/observation/decision responses validate JSON Schemas | verified |
 | Agent tiering | 6 major roles use the LLM path; others stay on UtilityPolicy | verified |
 | LLM proposal pipeline | strict JSON parsing, identity binding, one repair, audit rows, replay mode | verified with mock |
 | Episodic memory | events → `memory_episode` in the command transaction; top-5 retrieval into prompt | verified |
