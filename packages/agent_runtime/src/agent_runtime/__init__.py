@@ -7,6 +7,13 @@ from agent_runtime.inference import (
     ReplayExhausted,
     ReplayInferenceProvider,
 )
+from agent_runtime.llm import (
+    DecisionRecord,
+    LLMPolicy,
+    ProposalParseError,
+    ProposalReplayPolicy,
+    parse_proposal,
+)
 from agent_runtime.models import (
     ActionProposal,
     ActiveActionView,
@@ -27,14 +34,17 @@ from agent_runtime.models import (
 )
 from agent_runtime.observation import build_observation
 from agent_runtime.policy import UtilityPolicy
+from agent_runtime.prompt import build_planning_prompt, repair_prompt
 from agent_runtime.validator import ProposalRejected, decide_command, proposal_to_command
 
 __all__ = [
     "ActionProposal",
     "ActiveActionView",
     "AgentPolicy",
+    "DecisionRecord",
     "InferenceProvider",
     "KnownLocation",
+    "LLMPolicy",
     "MemoryRecord",
     "MockInferenceProvider",
     "NpcObservation",
@@ -44,7 +54,9 @@ __all__ = [
     "ObservedItem",
     "ObservedRelationship",
     "ProposalIntent",
+    "ProposalParseError",
     "ProposalRejected",
+    "ProposalReplayPolicy",
     "RecentEvent",
     "ReplayExhausted",
     "ReplayInferenceProvider",
@@ -52,6 +64,9 @@ __all__ = [
     "VisibleNpc",
     "VisibleOpportunity",
     "build_observation",
+    "build_planning_prompt",
     "decide_command",
+    "parse_proposal",
     "proposal_to_command",
+    "repair_prompt",
 ]
