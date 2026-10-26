@@ -1,0 +1,214 @@
+"""FastAPI application exposing the authoritative world API.
+
+R1 notes: the WebSocket stream polls the database (0.5s) instead of using an
+in-process pub/sub; LLM-backed dialogue is intentionally absent.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import uuid
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from typing import Annotated, Any
+
+from fastapi import Depends, FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
+
+from agent_runtime import NpcObservation, UtilityPolicy, build_observation
+from world_core import CommandRejected, WorldCommand
+from world_core import snapshot as core_snapshot
+from world_server.config import SETTINGS
+from world_server.db import get_engine, get_session_factory, session_dependency
+from world_server.repository import (
+    IdempotencyConflict,
+    NotFound,
+    StaleStateVersion,
+    apply_command,
+    bootstrap,
+    causality,
+    list_events,
+    load_snapshot,
+    load_state,
+    save_snapshot,
+)
+
+SessionDep = Annotated[Session, Depends(session_dependency)]
+
+
+def _error(
+    code: str, message: str, status: int, details: dict[str, Any] | None = None
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=status,
+        content={"code": code, "message": message, "details": details or {}},
+    )
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    session = get_session_factory(get_engine())()
+    try:
+        bootstrap(session, SETTINGS.world_seed)
+    finally:
+        session.close()
+    yield
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(title="Unwritten Dao World API", version="1.0.0", lifespan=_lifespan)
+
+    @app.exception_handler(CommandRejected)
+    async def _rejected(_request: Any, exc: CommandRejected) -> JSONResponse:
+        return _error(exc.code, exc.message, 422, exc.details)
+
+    @app.exception_handler(StaleStateVersion)
+    async def _stale(_request: Any, exc: StaleStateVersion) -> JSONResponse:
+        return _error(
+            "stale_state_version",
+            str(exc),
+            409,
+            {"expected": exc.expected, "actual": exc.actual},
+        )
+
+    @app.exception_handler(IdempotencyConflict)
+    async def _conflict(_request: Any, exc: IdempotencyConflict) -> JSONResponse:
+        return _error("idempotency_conflict", str(exc), 409)
+
+    @app.exception_handler(NotFound)
+    async def _not_found(_request: Any, exc: NotFound) -> JSONResponse:
+        return _error("not_found", str(exc), 404)
+
+    @app.get("/v1/health")
+    def health(session: SessionDep) -> dict[str, Any]:
+        try:
+            state = load_state(session)
+            return {"status": "ok", "world_loaded": True, "tick": state.tick}
+        except NotFound:
+            return {"status": "degraded", "world_loaded": False}
+
+    @app.get("/v1/world/snapshot")
+    def world_snapshot(session: SessionDep) -> dict[str, Any]:
+        return core_snapshot(load_state(session))
+
+    @app.get("/v1/world/events")
+    def world_events(
+        session: SessionDep,
+        after: int = Query(0, ge=0),
+        limit: int = Query(200, ge=1, le=1000),
+        type: str | None = Query(None),
+    ) -> dict[str, Any]:
+        events = list_events(session, after=after, limit=limit, event_type=type)
+        return {"events": [event.model_dump(mode="json") for event in events]}
+
+    @app.get("/v1/npcs/{npc_id}")
+    def get_npc(npc_id: uuid.UUID, session: SessionDep) -> dict[str, Any]:
+        state = load_state(session)
+        npc = state.npcs.get(str(npc_id))
+        if npc is None:
+            raise NotFound(f"unknown npc {npc_id}")
+        return npc.model_dump(mode="json")
+
+    @app.get("/v1/npcs/{npc_id}/observation")
+    def get_observation(npc_id: uuid.UUID, session: SessionDep) -> NpcObservation:
+        state = load_state(session)
+        if str(npc_id) not in state.npcs:
+            raise NotFound(f"unknown npc {npc_id}")
+        recent = list_events(session, after=max(0, state.last_event_id - 50))
+        recent_rows = [
+            {
+                "event_id": event.event_id,
+                "tick": event.tick,
+                "type": event.type,
+                "summary": _summarize(event.type, event.payload),
+            }
+            for event in recent
+        ]
+        return build_observation(state, str(npc_id), recent_events=recent_rows)
+
+    @app.post("/v1/commands")
+    def submit_command(session: SessionDep, command: dict[str, Any]) -> dict[str, Any]:
+        parsed = WorldCommand.model_validate(command)
+        return apply_command(session, parsed).model_dump(mode="json")
+
+    @app.post("/v1/agents/{npc_id}/decision")
+    def request_decision(npc_id: uuid.UUID, session: SessionDep) -> dict[str, Any]:
+        state = load_state(session)
+        npc = state.npcs.get(str(npc_id))
+        if npc is None:
+            raise NotFound(f"unknown npc {npc_id}")
+        if not npc.alive or npc.active_action is not None:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "actor_busy", "message": "NPC is dead or mid-action"},
+            )
+        observation = build_observation(state, str(npc_id))
+        proposal = UtilityPolicy().decide(observation)
+        return proposal.model_dump(mode="json")
+
+    @app.post("/v1/dialogue")
+    def dialogue(payload: dict[str, Any], session: SessionDep) -> dict[str, Any]:
+        state = load_state(session)
+        npc = state.npcs.get(str(payload.get("npc_id"))) if payload.get("npc_id") else None
+        if npc is None:
+            raise NotFound(f"unknown npc {payload.get('npc_id')}")
+        return {
+            "reply_text": f"（{npc.name}沉默不语。R1 服务器尚未接入语言模型。）",  # noqa: RUF001
+            "proposal": None,
+        }
+
+    @app.post("/v1/saves", status_code=201)
+    def create_save(session: SessionDep, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+        return save_snapshot(session, label=(payload or {}).get("label"))
+
+    @app.post("/v1/saves/{save_id}/load")
+    def load_save(save_id: uuid.UUID, session: SessionDep) -> dict[str, Any]:
+        return load_snapshot(session, str(save_id))
+
+    @app.get("/v1/debug/causality/{event_id}")
+    def get_causality(
+        event_id: int, session: SessionDep, depth: int = Query(8, ge=1, le=20)
+    ) -> dict[str, Any]:
+        chain = causality(session, event_id, depth=depth)
+        return {
+            "root_event_id": chain.root_event_id,
+            "events": [event.model_dump(mode="json") for event in chain.events],
+            "edges": chain.edges,
+        }
+
+    @app.websocket("/v1/events/stream")
+    async def events_stream(websocket: WebSocket, after: int = 0) -> None:
+        await websocket.accept()
+        session = get_session_factory(get_engine())()
+        cursor = after
+        try:
+            while True:
+                events = list_events(session, after=cursor, limit=200)
+                for event in events:
+                    await websocket.send_json(event.model_dump(mode="json"))
+                    cursor = event.event_id
+                await asyncio.sleep(0.5)
+        except WebSocketDisconnect:
+            pass
+        finally:
+            session.close()
+
+    return app
+
+
+def _summarize(event_type: str, payload: dict[str, Any]) -> str:
+    if event_type == "NPC_MOVED":
+        return f"moved to {payload.get('to_location_id')}"
+    if event_type == "ITEM_TRANSFERRED":
+        return f"item {payload.get('item_id')} changed hands"
+    if event_type == "BREAKTHROUGH_ATTEMPT":
+        return "attempted a realm breakthrough"
+    if event_type == "OPPORTUNITY_CLAIMED":
+        return f"claimed {payload.get('name')}"
+    if event_type == "NPC_DIED":
+        return f"died ({payload.get('cause')})"
+    return event_type.lower()
+
+
+__all__ = ["create_app"]

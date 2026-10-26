@@ -99,7 +99,7 @@ jobs:
         run: uv sync --all-packages
 
       - name: Integration tests
-        run: uv run pytest -m integration -q
+        run: uv run pytest services/world_server/tests -m integration -q
 
       - name: Record result label
         if: always()

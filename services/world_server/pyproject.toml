@@ -12,6 +12,7 @@ dependencies = [
     "agent-runtime",
     "alembic>=1.14",
     "fastapi>=0.115",
+    "pgvector>=0.3",
     "psycopg[binary]>=3.2",
     "pydantic>=2.9",
     "sqlalchemy>=2.0",
