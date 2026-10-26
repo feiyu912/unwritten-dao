@@ -12,6 +12,8 @@ import argparse
 import sys
 from collections import Counter
 
+from world_server.summaries import summarize_event
+
 from agent_runtime import UtilityPolicy, decide_command
 from world_core import (
     PLAYER_ID,
@@ -21,7 +23,6 @@ from world_core import (
     state_checksum,
     validate_state,
 )
-from world_server.summaries import summarize_event
 
 WEIGHT = {
     "NPC_DIED": 1.0,
@@ -95,14 +96,9 @@ def main(argv: list[str] | None = None) -> int:
     for faction in sorted(state.factions.values(), key=lambda item: item.faction_id):
         members = [npc for npc in state.npcs.values() if npc.faction_id == faction.faction_id]
         alive = sum(1 for npc in members if npc.alive)
-        print(
-            f"- {faction.name}: treasury={faction.treasury} "
-            f"alive={alive}/{len(members)}"
-        )
+        print(f"- {faction.name}: treasury={faction.treasury} alive={alive}/{len(members)}")
 
-    protagonist = next(
-        npc for npc in state.npcs.values() if npc.canonical_role == "protagonist"
-    )
+    protagonist = next(npc for npc in state.npcs.values() if npc.canonical_role == "protagonist")
     print("\n## Protagonist")
     print(
         f"- {protagonist.name}: alive={protagonist.alive} realm={protagonist.realm} "
