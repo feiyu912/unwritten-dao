@@ -215,8 +215,9 @@ def test_without_map_the_realm_stays_undiscovered() -> None:
 
 
 def test_combat_resolves_and_keeps_invariants() -> None:
-    from world_core import LOC_XUANYUE_SECT
     from world_core.worldgen import npc_id
+
+    from world_core import LOC_XUANYUE_SECT
 
     state = create_world(42)
     attacker = state.npcs[PROTAGONIST_ID]
