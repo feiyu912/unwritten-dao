@@ -20,6 +20,10 @@ from world_core.support import (
 )
 
 
+def _causal_parents(actor: Npc) -> list[int]:
+    return [actor.last_event_id] if actor.last_event_id is not None else []
+
+
 def handle_wait(state: WorldState, actor: Npc, arguments: dict[str, Any], emit: Emitter) -> None:
     require_idle(actor)
     ticks = require_int(arguments, "ticks", 1, 365)
@@ -63,6 +67,7 @@ def handle_move(state: WorldState, actor: Npc, arguments: dict[str, Any], emit: 
         "NPC_MOVED",
         actor_ids=[actor.npc_id],
         location_id=target,
+        parents=_causal_parents(actor),
         rng_seed=seed_for(state, "move", actor.npc_id, source, target),
         payload={"from_location_id": source, "to_location_id": target},
     )
@@ -88,6 +93,7 @@ def handle_start_cultivation(
         "CULTIVATION_STARTED",
         actor_ids=[actor.npc_id],
         location_id=actor.location_id,
+        parents=_causal_parents(actor),
         rng_seed=seed_for(state, "cultivate_start", actor.npc_id, days),
         payload={"days": days, "aura_multiplier": aura, "realm": actor.realm},
     )
@@ -132,7 +138,7 @@ def handle_attempt_breakthrough(
     rng = random.Random(seed_for(state, "breakthrough", actor.npc_id, event_id, next_realm))
     roll = round(rng.random(), 6)
 
-    parent_ids: list[int] = []
+    parent_ids: list[int] = _causal_parents(actor)
     if pill_item is not None:
         assert pill_id is not None
         actor.inventory.remove(pill_id)
@@ -144,6 +150,7 @@ def handle_attempt_breakthrough(
                 "ITEM_CONSUMED",
                 actor_ids=[actor.npc_id],
                 location_id=actor.location_id,
+                parents=_causal_parents(actor),
                 rng_seed=seed_for(state, "consume", actor.npc_id, pill_id),
                 payload={"item_id": pill_id, "name": pill_item.name, "reason": "breakthrough"},
             )
@@ -273,6 +280,7 @@ def handle_transfer_item(
         actor_ids=[actor.npc_id],
         target_ids=target_ids,
         location_id=actor.location_id,
+        parents=_causal_parents(actor),
         rng_seed=seed_for(state, "transfer", actor.npc_id, item_id, to_id),
         payload={
             "item_id": item_id,
@@ -301,6 +309,7 @@ def handle_investigate(
         "LOCATION_INVESTIGATED",
         actor_ids=[actor.npc_id],
         location_id=target,
+        parents=_causal_parents(actor),
         rng_seed=seed_for(state, "investigate", actor.npc_id, target),
         payload={"focus": arguments.get("focus", "secret_realm"), "location_name": location.name},
     )
@@ -362,6 +371,7 @@ def handle_enter_secret_realm(
         "SECRET_REALM_ENTERED",
         actor_ids=[actor.npc_id],
         location_id=realm.interior_location_id,
+        parents=_causal_parents(actor),
         rng_seed=seed_for(state, "enter_realm", actor.npc_id, realm_id),
         payload={
             "realm_id": realm_id,
@@ -434,6 +444,7 @@ def handle_claim_opportunity(
         "OPPORTUNITY_CLAIMED",
         actor_ids=[actor.npc_id],
         location_id=actor.location_id,
+        parents=_causal_parents(actor),
         rng_seed=seed_for(state, "claim_result", actor.npc_id, opportunity_id, event_id),
         payload=payload,
     )
@@ -485,6 +496,7 @@ def handle_attack(state: WorldState, actor: Npc, arguments: dict[str, Any], emit
         actor_ids=[actor.npc_id],
         target_ids=[target.npc_id],
         location_id=actor.location_id,
+        parents=_causal_parents(actor),
         rng_seed=seed_for(state, "combat_result", actor.npc_id, target_id, event_id),
         payload={
             "attacker_id": actor.npc_id,

@@ -58,6 +58,11 @@ def apply_command(state: WorldState, command: WorldCommand) -> CommandResult:
 
     state.state_version += 1
     state.last_event_id = emit.event_id
+    for event in emit.events:
+        for actor_id in event.actor_ids:
+            event_actor = state.npcs.get(actor_id)
+            if event_actor is not None:
+                event_actor.last_event_id = event.event_id
     return CommandResult(
         accepted=True,
         state_version=state.state_version,
@@ -253,6 +258,8 @@ def validate_state(state: WorldState) -> list[str]:
             problems.append(f"{npc.npc_id} is dead but has an active action")
         if not npc.alive and npc.death_tick is None:
             problems.append(f"{npc.npc_id} is dead without death_tick")
+        if npc.last_event_id is not None and npc.last_event_id > state.last_event_id:
+            problems.append(f"{npc.npc_id} references a future event id")
         for known in npc.known_locations:
             if known not in state.locations:
                 problems.append(f"{npc.npc_id} knows unknown location {known}")

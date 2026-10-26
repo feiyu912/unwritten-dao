@@ -23,6 +23,7 @@ uv sync --all-packages
 uv run pytest packages services tests clients/unreal/tools -m "not integration and not slow"
 uv run python -m tools.bench_sim --npcs 30 --years 20 --seed 42
 uv run python -m tools.demo_causal --days 400     # baseline vs stolen-map timeline
+uv run python -m tools.report_history --days 400   # causal coverage + goal outcome
 uv run python -m tools.play                        # playable headless MVP
 uv run uvicorn world_server.app:app --port 8000    # HTTP/WS server (needs PostgreSQL)
 ```

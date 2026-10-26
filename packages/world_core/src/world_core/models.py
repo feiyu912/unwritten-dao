@@ -54,6 +54,7 @@ class Npc(StrictModel):
     inventory: list[str] = Field(default_factory=list)
     death_tick: int | None = None
     death_cause: str | None = None
+    last_event_id: int | None = Field(default=None, ge=1)
 
 
 class Location(StrictModel):

@@ -40,9 +40,9 @@ excluded from the fast suite).
 3. **Embedding-based memory** — `memory_episode.embedding` and pgvector exist, but retrieval is
    deterministic lexical scoring; no embedding provider has been exercised.
 4. **Narrative quality** — no human ratings for coherence/surprise/causal plausibility.
-5. **Causal coverage / goal persistence metrics** — not instrumented. Causal edges cover direct
-   parent chains (e.g. investigate → discover → breakthrough); the map transfer is not an edge of
-   the discovery event, only an earlier event in the log.
+5. **Causal coverage** — instrumented via `tools/report_history.py`; the 400-day run shows 100%
+   coverage on important events, but provenance is "the actor's previous event" (linear).
+   Multi-cause links and subjective meaningfulness are not modeled.
 6. **Database size under 20 years** — the 20-year benchmark runs in memory; no sustained
    repository-driven 20-year run or 1 GB database measurement.
 7. **Multi-user / auth / process recovery** — single world, single process, no authentication.
@@ -54,5 +54,6 @@ excluded from the fast suite).
 - Connect a real provider (cloud or llama.cpp) and record TTFT/cost; replay its fixtures.
 - Add embeddings behind the existing `MemoryStore` interface and evaluate Recall@5 on a labeled
   set from real 20-year histories.
-- Instrument causal coverage and goal persistence over 20 years.
+- Extend causal provenance beyond "last actor event" (multi-parent narrative causes) and
+  measure goal persistence over 20 years.
 - Drive the 20-year history through PostgreSQL and record database size and query latency.
