@@ -17,6 +17,7 @@ from agent_runtime import (
     LLMPolicy,
     MockInferenceProvider,
     OpenAICompatibleProvider,
+    RivalryPolicy,
     UtilityPolicy,
 )
 
@@ -78,7 +79,7 @@ def build_policy() -> PolicySelection:
                 model_version=os.environ.get("LLM_MODEL_VERSION", model),
             ),
         )
-    return PolicySelection("utility", UtilityPolicy())
+    return PolicySelection("utility", RivalryPolicy())
 
 
 __all__ = ["MAJOR_ROLES", "PolicySelection", "build_policy", "is_major", "policy_for"]

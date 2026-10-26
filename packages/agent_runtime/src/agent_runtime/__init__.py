@@ -45,7 +45,7 @@ from agent_runtime.models import (
     VisibleOpportunity,
 )
 from agent_runtime.observation import build_observation
-from agent_runtime.policy import UtilityPolicy
+from agent_runtime.policy import RivalryPolicy, UtilityPolicy
 from agent_runtime.prompt import build_planning_prompt, repair_prompt
 from agent_runtime.providers import OpenAICompatibleProvider, ProviderError
 from agent_runtime.validator import (
@@ -86,6 +86,7 @@ __all__ = [
     "RecentEvent",
     "ReplayExhausted",
     "ReplayInferenceProvider",
+    "RivalryPolicy",
     "UtilityPolicy",
     "VisibleNpc",
     "VisibleOpportunity",

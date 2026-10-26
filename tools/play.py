@@ -18,7 +18,7 @@ from typing import Any
 
 from world_server.summaries import summarize_event
 
-from agent_runtime import UtilityPolicy, decide_command
+from agent_runtime import RivalryPolicy, decide_command
 from world_core import (
     PLAYER_ID,
     CommandRejected,
@@ -63,7 +63,7 @@ _HELP = """\
 class Game:
     def __init__(self, state: WorldState) -> None:
         self.state = state
-        self.policy = UtilityPolicy()
+        self.policy = RivalryPolicy()
 
     def player(self):
         return self.state.npcs[PLAYER_ID]

@@ -260,4 +260,29 @@ def _next_step(observation: NpcObservation, target: str) -> str | None:
     return node if previous[node] == current else None
 
 
-__all__ = ["UtilityPolicy"]
+class RivalryPolicy(UtilityPolicy):
+    """Utility policy plus a non-lethal attack when a rival goal target is visible."""
+
+    def decide(self, observation: NpcObservation) -> ActionProposal:
+        if observation.self.health > 0.5:
+            visible = {npc.npc_id for npc in observation.visible_npcs if npc.alive}
+            rivals = [
+                goal
+                for goal in observation.goals
+                if goal.kind == "defeat_rival" and goal.status == "active"
+            ]
+            for goal in sorted(rivals, key=lambda item: (-item.priority, item.goal_id)):
+                target = goal.params.get("target")
+                if isinstance(target, str) and target in visible:
+                    return _proposal(
+                        observation,
+                        "attack",
+                        {"target_id": target, "intent": "subdue"},
+                        "a rival stands in front of me",
+                        goal.goal_id,
+                        confidence=0.75,
+                    )
+        return super().decide(observation)
+
+
+__all__ = ["RivalryPolicy", "UtilityPolicy"]

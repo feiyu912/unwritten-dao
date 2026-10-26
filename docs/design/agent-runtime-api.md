@@ -92,6 +92,13 @@ The policy receives everything it needs from the observation; it must not import
 `worldgen` constants to cheat. Item semantics may be read from item `kind` and `properties`
 (e.g. `points_to`), not from hidden state.
 
+## RivalryPolicy
+
+`RivalryPolicy` extends `UtilityPolicy`: if an active `defeat_rival` goal's target is visible
+and the actor is healthy, it proposes `attack` with intent `subdue` (never lethal by choice).
+Otherwise it falls back to normal utility behavior. The server's utility mode uses it for the
+six major roles; background NPCs stay on `UtilityPolicy`.
+
 ## Fallback
 
 `UtilityPolicy` is the deterministic fallback. Any proposal that fails validation triggers at

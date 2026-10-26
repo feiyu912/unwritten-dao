@@ -397,13 +397,11 @@ def test_event_pagination_and_websocket_resume(client: TestClient) -> None:
     first = advance("1")
     second = advance("2")
 
-    page = client.get(
-        "/v1/world/events", params={"after": first["event_id"], "limit": 1}
-    ).json()["events"]
+    page = client.get("/v1/world/events", params={"after": first["event_id"], "limit": 1}).json()[
+        "events"
+    ]
     assert [event["event_id"] for event in page] == [second["event_id"]]
 
-    with client.websocket_connect(
-        f"/v1/events/stream?after={first['event_id']}"
-    ) as websocket:
+    with client.websocket_connect(f"/v1/events/stream?after={first['event_id']}") as websocket:
         resumed = websocket.receive_json()
     assert resumed["event_id"] == second["event_id"]

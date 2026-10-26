@@ -166,3 +166,24 @@ def test_simulator_rejection_falls_back_to_utility() -> None:
     assert result.state_version >= 1
     assert state.npcs[PROTAGONIST_ID].location_id == "location_blackwood_forest"
     assert validate_state(state) == []
+
+
+def test_rivalry_policy_attacks_a_visible_goal_target() -> None:
+    from agent_runtime.validator import proposal_to_command
+    from world_core.worldgen import npc_id
+
+    from agent_runtime import RivalryPolicy
+    from world_core import LOC_CHIXIAO_OUTPOST
+
+    state = create_world(42)
+    rival = state.npcs[npc_id("pei_lie")]
+    rival.location_id = LOC_CHIXIAO_OUTPOST
+    state.npcs[PROTAGONIST_ID].location_id = LOC_CHIXIAO_OUTPOST
+    observation = build_observation(state, rival.npc_id)
+    proposal = RivalryPolicy().decide(observation)
+    assert proposal.intent == "attack"
+    assert proposal.arguments["intent"] == "subdue"
+    assert proposal.arguments["target_id"] == PROTAGONIST_ID
+    result = apply_command(state, proposal_to_command(state, proposal))
+    assert any(event.type == "COMBAT_RESOLVED" for event in result.events)
+    assert validate_state(state) == []
