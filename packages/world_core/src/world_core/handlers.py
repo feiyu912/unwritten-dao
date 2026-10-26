@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 from typing import Any
 
+from world_core.goal_evolution import apply_breakthrough_goal_progress
 from world_core.models import ActiveAction, Npc, WorldState
 from world_core.rng import seed_for
 from world_core.ruleset import RULESET
@@ -20,8 +21,23 @@ from world_core.support import (
 )
 
 
-def _causal_parents(actor: Npc) -> list[int]:
-    return [actor.last_event_id] if actor.last_event_id is not None else []
+def _unique_event_ids(*event_ids: int | None) -> list[int]:
+    """Deterministic, duplicate-free parent list. Only true causes belong here."""
+    return sorted({event_id for event_id in event_ids if event_id is not None})
+
+
+def _realm_access_event_id(state: WorldState, actor: Npc) -> int | None:
+    """Provenance for the actor's current access to a secret realm interior."""
+    for realm in sorted(state.secret_realms.values(), key=lambda item: item.realm_id):
+        if realm.interior_location_id != actor.location_id:
+            continue
+        entry_id = realm.entry_event_ids.get(actor.npc_id)
+        if entry_id is not None:
+            return entry_id
+        discovery_id = realm.discovery_event_ids.get(actor.npc_id)
+        if discovery_id is not None:
+            return discovery_id
+    return None
 
 
 def handle_wait(state: WorldState, actor: Npc, arguments: dict[str, Any], emit: Emitter) -> None:
@@ -67,7 +83,6 @@ def handle_move(state: WorldState, actor: Npc, arguments: dict[str, Any], emit: 
         "NPC_MOVED",
         actor_ids=[actor.npc_id],
         location_id=target,
-        parents=_causal_parents(actor),
         rng_seed=seed_for(state, "move", actor.npc_id, source, target),
         payload={"from_location_id": source, "to_location_id": target},
     )
@@ -93,7 +108,6 @@ def handle_start_cultivation(
         "CULTIVATION_STARTED",
         actor_ids=[actor.npc_id],
         location_id=actor.location_id,
-        parents=_causal_parents(actor),
         rng_seed=seed_for(state, "cultivate_start", actor.npc_id, days),
         payload={"days": days, "aura_multiplier": aura, "realm": actor.realm},
     )
@@ -138,23 +152,23 @@ def handle_attempt_breakthrough(
     rng = random.Random(seed_for(state, "breakthrough", actor.npc_id, event_id, next_realm))
     roll = round(rng.random(), 6)
 
-    parent_ids: list[int] = _causal_parents(actor)
+    parent_ids: list[int] = []
     if pill_item is not None:
         assert pill_id is not None
+        pill_acquired_event_id = pill_item.acquired_event_id
         actor.inventory.remove(pill_id)
         pill_item.owner_id = None
         pill_item.location_id = None
         pill_item.hidden = True
-        parent_ids.append(
-            emit(
-                "ITEM_CONSUMED",
-                actor_ids=[actor.npc_id],
-                location_id=actor.location_id,
-                parents=_causal_parents(actor),
-                rng_seed=seed_for(state, "consume", actor.npc_id, pill_id),
-                payload={"item_id": pill_id, "name": pill_item.name, "reason": "breakthrough"},
-            )
+        consume_id = emit(
+            "ITEM_CONSUMED",
+            actor_ids=[actor.npc_id],
+            location_id=actor.location_id,
+            parents=_unique_event_ids(pill_acquired_event_id),
+            rng_seed=seed_for(state, "consume", actor.npc_id, pill_id),
+            payload={"item_id": pill_id, "name": pill_item.name, "reason": "breakthrough"},
         )
+        parent_ids = _unique_event_ids(pill_acquired_event_id, consume_id)
 
     success = roll < probability
     payload: dict[str, Any] = {
@@ -175,12 +189,9 @@ def handle_attempt_breakthrough(
         actor.lifespan_ticks = max(
             actor.lifespan_ticks, RULESET.lifespan_ticks(actor.realm, actor.foundation)
         )
-        achieved = []
-        for goal in actor.goals:
-            target_realm = int(goal.params.get("target_realm", 0))
-            if goal.kind == "breakthrough" and target_realm <= actor.realm:
-                goal.status = "achieved"
-                achieved.append(goal.goal_id)
+        achieved = apply_breakthrough_goal_progress(
+            actor, event_id=emit.event_id + 1, tick=state.tick
+        )
         payload["goals_achieved"] = achieved
         payload["lifespan_ticks"] = actor.lifespan_ticks
     else:
@@ -275,12 +286,12 @@ def handle_transfer_item(
         destination_location.stash.append(item_id)
         item.location_id = destination_location.location_id
 
+    item.acquired_event_id = emit.event_id + 1
     emit(
         "ITEM_TRANSFERRED",
         actor_ids=[actor.npc_id],
         target_ids=target_ids,
         location_id=actor.location_id,
-        parents=_causal_parents(actor),
         rng_seed=seed_for(state, "transfer", actor.npc_id, item_id, to_id),
         payload={
             "item_id": item_id,
@@ -309,7 +320,6 @@ def handle_investigate(
         "LOCATION_INVESTIGATED",
         actor_ids=[actor.npc_id],
         location_id=target,
-        parents=_causal_parents(actor),
         rng_seed=seed_for(state, "investigate", actor.npc_id, target),
         payload={"focus": arguments.get("focus", "secret_realm"), "location_name": location.name},
     )
@@ -335,11 +345,14 @@ def handle_investigate(
             confidence=0.95,
             source_event_id=investigate_id,
         )
-        emit(
+        # Discovery through a map has two true causes: the investigation that
+        # consumed the knowledge and the event that put the map in the actor's
+        # hands. A merely previous action is not a cause.
+        discovery_id = emit(
             "SECRET_REALM_DISCOVERED",
             actor_ids=[actor.npc_id],
             location_id=target,
-            parents=[investigate_id],
+            parents=_unique_event_ids(investigate_id, item.acquired_event_id),
             rng_seed=seed_for(state, "discover", actor.npc_id, realm.realm_id),
             payload={
                 "realm_id": realm.realm_id,
@@ -349,6 +362,7 @@ def handle_investigate(
                 "map_item_id": realm.required_item_id,
             },
         )
+        realm.discovery_event_ids[actor.npc_id] = discovery_id
 
 
 def handle_enter_secret_realm(
@@ -367,11 +381,12 @@ def handle_enter_secret_realm(
         reject("realm_undiscovered", "the actor has not discovered this realm")
     source = actor.location_id
     actor.location_id = realm.interior_location_id
-    emit(
+    discovery_id = realm.discovery_event_ids.get(actor.npc_id)
+    entry_id = emit(
         "SECRET_REALM_ENTERED",
         actor_ids=[actor.npc_id],
         location_id=realm.interior_location_id,
-        parents=_causal_parents(actor),
+        parents=_unique_event_ids(discovery_id),
         rng_seed=seed_for(state, "enter_realm", actor.npc_id, realm_id),
         payload={
             "realm_id": realm_id,
@@ -379,6 +394,7 @@ def handle_enter_secret_realm(
             "to_location_id": realm.interior_location_id,
         },
     )
+    realm.entry_event_ids[actor.npc_id] = entry_id
 
 
 def handle_claim_opportunity(
@@ -434,6 +450,7 @@ def handle_claim_opportunity(
             item.hidden = False
             item.owner_id = actor.npc_id
             item.location_id = None
+            item.acquired_event_id = event_id
             if reward_id not in actor.inventory:
                 actor.inventory.append(reward_id)
             awarded.append(reward_id)
@@ -444,7 +461,7 @@ def handle_claim_opportunity(
         "OPPORTUNITY_CLAIMED",
         actor_ids=[actor.npc_id],
         location_id=actor.location_id,
-        parents=_causal_parents(actor),
+        parents=_unique_event_ids(_realm_access_event_id(state, actor)),
         rng_seed=seed_for(state, "claim_result", actor.npc_id, opportunity_id, event_id),
         payload=payload,
     )
@@ -496,7 +513,6 @@ def handle_attack(state: WorldState, actor: Npc, arguments: dict[str, Any], emit
         actor_ids=[actor.npc_id],
         target_ids=[target.npc_id],
         location_id=actor.location_id,
-        parents=_causal_parents(actor),
         rng_seed=seed_for(state, "combat_result", actor.npc_id, target_id, event_id),
         payload={
             "attacker_id": actor.npc_id,
@@ -546,11 +562,14 @@ def handle_attack(state: WorldState, actor: Npc, arguments: dict[str, Any], emit
         payload={"source_npc_id": target.npc_id, "target_npc_id": actor.npc_id},
     )
     if died:
+        victim = target if won else actor
+        killer = actor if won else target
         kill_npc(
             state,
-            target if won else actor,
+            victim,
             cause="combat",
             emitter=emit,
             parents=[combat_id],
             rng_seed=seed_for(state, "combat_death", event_id),
+            killer_id=killer.npc_id,
         )

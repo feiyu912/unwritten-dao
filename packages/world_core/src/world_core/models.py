@@ -19,6 +19,10 @@ class Goal(StrictModel):
     priority: float = Field(default=0.5, ge=0.0, le=1.0)
     params: dict[str, Any] = Field(default_factory=dict)
     created_tick: int = 0
+    # Provenance: the event that first caused this goal and the last tick its
+    # status/params changed. Both are optional so pre-provenance snapshots load.
+    origin_event_id: int | None = Field(default=None, ge=1)
+    last_updated_tick: int | None = Field(default=None, ge=0)
 
 
 class ActiveAction(StrictModel):
@@ -86,6 +90,8 @@ class Item(StrictModel):
     location_id: str | None = None
     hidden: bool = False
     properties: dict[str, Any] = Field(default_factory=dict)
+    # Event that most recently moved this item into its current container.
+    acquired_event_id: int | None = Field(default=None, ge=1)
 
 
 class Opportunity(StrictModel):
@@ -117,6 +123,9 @@ class SecretRealm(StrictModel):
     close_tick: int
     opened: bool = True
     discovered_by: list[str] = Field(default_factory=list)
+    # Per-NPC provenance: which event discovered / granted entry to the realm.
+    discovery_event_ids: dict[str, int] = Field(default_factory=dict)
+    entry_event_ids: dict[str, int] = Field(default_factory=dict)
 
 
 class Relationship(StrictModel):
