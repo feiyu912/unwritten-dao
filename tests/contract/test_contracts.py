@@ -136,7 +136,12 @@ OBSERVATION_EXAMPLE = {
         {"event_id": 100, "tick": 10, "type": "ITEM_TRANSFERRED", "summary": "拾得残图"}
     ],
     "goals": [
-        {"goal_id": "goal_breakthrough", "kind": "breakthrough", "status": "active", "priority": 1.0}
+        {
+            "goal_id": "goal_breakthrough",
+            "kind": "breakthrough",
+            "status": "active",
+            "priority": 1.0,
+        }
     ],
     "active_action": None,
     "available_actions": ["wait", "move", "start_cultivation", "investigate"],
@@ -153,7 +158,7 @@ PROPOSAL_EXAMPLE = {
     "arguments": {"to_location_id": "ruined_temple"},
     "valid_for_ticks": 7,
     "memory_refs": [100],
-    "rationale_short": "洞府图在破庙，先去取图。",
+    "rationale_short": "洞府图在破庙，先去取图。",  # noqa: RUF001
     "confidence": 0.82,
 }
 

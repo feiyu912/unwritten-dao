@@ -34,3 +34,4 @@ Binaries/
 
 # Local tool state
 .worktrees/
+.qoder/

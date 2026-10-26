@@ -35,6 +35,7 @@ filterwarnings = ["error::DeprecationWarning:world_core.*"]
 line-length = 100
 target-version = "py312"
 src = ["packages", "services", "tests", "tools"]
+extend-exclude = [".qoder"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]

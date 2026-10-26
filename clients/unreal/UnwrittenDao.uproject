@@ -1,0 +1,31 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.6",
+  "Category": "Game",
+  "Description": "Unvalidated UE5 scaffold for the Unwritten Dao xianxia RPG client.",
+  "Modules": [
+    {
+      "Name": "UnwrittenDao",
+      "Type": "Runtime",
+      "LoadingPhase": "Default",
+      "AdditionalDependencies": [
+        "Engine",
+        "CoreUObject",
+        "HTTP",
+        "Json",
+        "JsonUtilities",
+        "UMG",
+        "Slate",
+        "SlateCore",
+        "AIModule",
+        "NavigationSystem"
+      ]
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "ModelingToolsEditorMode",
+      "Enabled": false
+    }
+  ]
+}
