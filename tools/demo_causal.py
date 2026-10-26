@@ -17,7 +17,6 @@ from agent_runtime import UtilityPolicy, decide_command
 from world_core import (
     ITEM_MAP_FRAGMENT,
     LOC_BLACKWOOD_FOREST,
-    LOC_MISTY_VALLEY,
     LOC_RUINED_TEMPLE,
     LOC_XUANYUE_SECT,
     OPP_FOUNDATION_PILL,
@@ -68,7 +67,10 @@ class Timeline:
 def _steal_map(state) -> None:
     player = state.npcs[PLAYER_ID]
     for target in (LOC_XUANYUE_SECT, LOC_BLACKWOOD_FOREST, LOC_RUINED_TEMPLE):
-        apply_command(state, make_command(state, PLAYER_ID, "move", {"to_location_id": target}, source="player"))
+        command = make_command(
+            state, PLAYER_ID, "move", {"to_location_id": target}, source="player"
+        )
+        apply_command(state, command)
     apply_command(
         state,
         make_command(
@@ -107,7 +109,8 @@ def run(*, days: int, steal: bool) -> Timeline:
         "location": protagonist.location_id,
         "has_map": ITEM_MAP_FRAGMENT in protagonist.inventory,
         "owns_pill": "item_foundation_pill" in protagonist.inventory,
-        "realm_discovered": protagonist.npc_id in state.secret_realms[REALM_ANCIENT_CAVE].discovered_by,
+        "realm_discovered": protagonist.npc_id
+        in state.secret_realms[REALM_ANCIENT_CAVE].discovered_by,
         "pill_claimed_by": state.opportunities[OPP_FOUNDATION_PILL].claimed_by,
     }
     assert validate_state(state) == [], validate_state(state)
