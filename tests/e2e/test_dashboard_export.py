@@ -14,3 +14,5 @@ def test_dashboard_is_self_contained_and_contains_the_story() -> None:
     assert "残破洞府图" in page
     assert "http://" not in page and "https://" not in page
     assert "violations: none" in page
+    assert "故事线" in page
+    assert "score=" in page

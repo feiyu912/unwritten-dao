@@ -44,6 +44,7 @@ from agent_runtime.models import (
     VisibleNpc,
     VisibleOpportunity,
 )
+from agent_runtime.narrative import IMPORTANCE, StoryThread, find_story_threads
 from agent_runtime.observation import build_observation
 from agent_runtime.policy import RivalryPolicy, UtilityPolicy
 from agent_runtime.prompt import build_planning_prompt, repair_prompt
@@ -56,6 +57,7 @@ from agent_runtime.validator import (
 )
 
 __all__ = [
+    "IMPORTANCE",
     "ActionProposal",
     "ActiveActionView",
     "AgentPolicy",
@@ -87,6 +89,7 @@ __all__ = [
     "ReplayExhausted",
     "ReplayInferenceProvider",
     "RivalryPolicy",
+    "StoryThread",
     "UtilityPolicy",
     "VisibleNpc",
     "VisibleOpportunity",
@@ -95,6 +98,7 @@ __all__ = [
     "cosine",
     "decide_and_apply",
     "decide_command",
+    "find_story_threads",
     "parse_proposal",
     "proposal_to_command",
     "repair_prompt",

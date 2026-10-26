@@ -16,6 +16,7 @@ import sys
 
 from world_server.summaries import summarize_event
 
+from agent_runtime import find_story_threads
 from tools.character_history import character_timeline, find_npc, simulate
 from world_core import state_checksum, validate_state
 
@@ -167,6 +168,24 @@ def _timeline(state, events) -> str:
     return "<ol>" + "".join(rows) + "</ol>" if rows else "<p>无重要事件</p>"
 
 
+def _threads(state, events) -> str:
+    rows = []
+    for thread in find_story_threads(events):
+        steps = "".join(
+            f"<li>{_esc(_thread_summary(state, events[event_id]))}</li>"
+            for event_id in thread.event_ids
+        )
+        rows.append(
+            f"<li><strong>{_esc(thread.headline)}</strong> "
+            f"<span class='meta'>score={thread.score:.2f}</span><ol>{steps}</ol></li>"
+        )
+    return "<ol>" + "".join(rows) + "</ol>" if rows else "<p>无故事线</p>"
+
+
+def _thread_summary(state, event) -> str:
+    return summarize_event(event.type, event.payload, state)
+
+
 def build_dashboard(state, events, *, years: int, seed: int) -> str:
     protagonist = find_npc(state, "protagonist")
     life = character_timeline(state, events, protagonist.npc_id)[:12] if protagonist else []
@@ -214,6 +233,7 @@ ol {{ padding-left: 22px; }} li {{ margin: 5px 0; }}
 </div></div>
 <h2>主要人物</h2><div class="card">{_characters(state)}</div>
 <h2>重要事件与因果父事件</h2><div class="card">{_timeline(state, events)}</div>
+<h2>故事线（真实因果链）</h2><div class="card">{_threads(state, events)}</div>
 <h2>主角人生节点</h2><div class="card"><ol>
 {"".join(f"<li>{_esc(line)}</li>" for line in life) or "<li>无</li>"}
 </ol></div>

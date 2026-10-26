@@ -14,7 +14,7 @@ from collections import Counter
 
 from world_server.summaries import summarize_event
 
-from agent_runtime import UtilityPolicy, decide_command
+from agent_runtime import UtilityPolicy, decide_command, find_story_threads
 from world_core import (
     PLAYER_ID,
     advance_time,
@@ -79,18 +79,11 @@ def main(argv: list[str] | None = None) -> int:
     for event in important[:20]:
         print("- " + _describe(state, event))
 
-    print("\n## Causal chains")
-    for event in important[:5]:
-        chain = []
-        node = event
-        seen = set()
-        while node is not None and node.event_id not in seen and len(chain) < 8:
-            seen.add(node.event_id)
-            chain.append(node)
-            node = events.get(node.causal_parent_ids[0]) if node.causal_parent_ids else None
-        print(f"- E{event.event_id}:")
-        for step in reversed(chain):
-            print(f"    {_describe(state, step)}")
+    print("\n## Story threads")
+    for thread in find_story_threads(events.values()):
+        print(f"- score={thread.score:.2f} {thread.headline}")
+        for event_id in thread.event_ids:
+            print(f"    {_describe(state, events[event_id])}")
 
     print("\n## Factions")
     for faction in sorted(state.factions.values(), key=lambda item: item.faction_id):
