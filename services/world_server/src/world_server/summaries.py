@@ -21,7 +21,10 @@ def summarize_event(
     if event_type == "WORLD_ADVANCED":
         return f"world advanced to tick {payload.get('to_tick')}"
     if event_type == "NPC_MOVED":
-        return f"moved to {payload.get('to_location_id')}"
+        target = payload.get("to_location_id")
+        if state is not None and isinstance(target, str) and target in state.locations:
+            return f"moved to {state.locations[target].name}"
+        return f"moved to {target}"
     if event_type == "ITEM_TRANSFERRED":
         return f"item {payload.get('name')} changed hands"
     if event_type == "ITEM_CONSUMED":
@@ -41,9 +44,15 @@ def summarize_event(
     if event_type == "SECRET_REALM_DISCOVERED":
         return f"discovered the secret realm {payload.get('name')}"
     if event_type == "SECRET_REALM_ENTERED":
-        return f"entered the secret realm {payload.get('realm_id')}"
+        realm_id = payload.get("realm_id")
+        if state is not None and isinstance(realm_id, str) and realm_id in state.secret_realms:
+            return f"entered the secret realm {state.secret_realms[realm_id].name}"
+        return f"entered the secret realm {realm_id}"
     if event_type == "SECRET_REALM_CLOSED":
-        return f"the secret realm {payload.get('realm_id')} closed"
+        realm_id = payload.get("realm_id")
+        if state is not None and isinstance(realm_id, str) and realm_id in state.secret_realms:
+            return f"the secret realm {state.secret_realms[realm_id].name} closed"
+        return f"the secret realm {realm_id} closed"
     if event_type == "OPPORTUNITY_CLAIMED":
         if payload.get("success"):
             return f"claimed {payload.get('name')}"

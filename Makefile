@@ -31,3 +31,6 @@ report:
 
 history:
 	uv run python -m tools.character_history --npc 沈砚 --years 20
+
+dashboard:
+	uv run python -m tools.export_dashboard --years 20

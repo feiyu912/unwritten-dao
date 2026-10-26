@@ -17,6 +17,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Snapshot / save-load | core round-trip + server time-travel test; replay checksum identical | verified |
 | 20-year agent history | `tools/narrative_report.py`: **1.9 s**, protagonist reaches realm 2, causal chains + faction outcomes | verified |
 | Character life query | `tools/character_history.py --npc 沈砚 --years 20`: full event-ID timeline | verified |
+| History dashboard | self-contained HTML (region map, NPC/faction state, causal timeline); rendered and checked in Chrome | verified |
 | 20-year persisted history | `tools/bench_db.py`: **8.72 s**, 1707 events, 600 memories, state valid | verified |
 | Database size target | same run: **18.2 MB** total (< 1 GB) | verified (cultivation-only history) |
 | PostgreSQL persistence | 22 integration tests against real pgvector PostgreSQL 17 | verified |

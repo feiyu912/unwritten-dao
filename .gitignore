@@ -18,6 +18,7 @@ build/
 
 # Local runtime data
 data/
+reports/
 *.sqlite3
 *.db
 
