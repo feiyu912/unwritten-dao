@@ -28,3 +28,6 @@ bench-db:
 
 report:
 	uv run python -m tools.narrative_report --years 20 --seed 42
+
+history:
+	uv run python -m tools.character_history --npc 沈砚 --years 20
