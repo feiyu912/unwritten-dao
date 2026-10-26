@@ -13,6 +13,7 @@
     "location_id",
     "self",
     "inventory",
+    "visible_items",
     "visible_npcs",
     "relationships",
     "beliefs",
@@ -60,6 +61,20 @@
       }
     },
     "inventory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["item_id", "name", "kind"],
+        "properties": {
+          "item_id": { "type": "string" },
+          "name": { "type": "string" },
+          "kind": { "type": "string" },
+          "properties": { "type": "object" }
+        }
+      }
+    },
+    "visible_items": {
       "type": "array",
       "items": {
         "type": "object",
