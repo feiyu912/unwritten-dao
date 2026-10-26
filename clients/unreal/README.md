@@ -36,10 +36,25 @@ on the current development machine, so nothing here has been compiled or opened 
    the level Blueprint.
 5. Validate Play-in-Editor, then package a Development build.
 
+## Blockout layout
+
+`Content/Layout/mvp_scene.json` is generated from the authoritative seed world (8 locations,
+30 NPC spawns, player spawn, actor tags, streaming suggestions). Regenerate and verify it with:
+
+```bash
+uv run python clients/unreal/tools/export_scene_layout.py
+uv run pytest clients/unreal/tools/test_scene_layout.py -q
+```
+
+Do not hand-edit the JSON. The editor import procedure, scene plan, and asset policy are in
+`docs/scene-plan.md`, `docs/editor-checklist.md`, and `docs/asset-licenses.md`.
+
 ## Status
 
 - C++ scaffold: written against the versioned JSON contracts; **not compiled**.
 - Headless mock: tested (`uv run pytest clients/unreal/tools -q`).
+- Layout export: deterministic and tested headlessly (no editor/DB); editor import is pending.
 - Editor validation, asset import, NavMesh projection, and packaging: **pending on the GPU machine**.
 
-See `docs/integration-notes.md` and `docs/asset-list.md`.
+See `docs/integration-notes.md`, `docs/asset-list.md`, `docs/asset-licenses.md`,
+`docs/scene-plan.md`, and `docs/editor-checklist.md`.
