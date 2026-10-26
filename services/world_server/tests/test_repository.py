@@ -407,3 +407,15 @@ def test_agent_history_persists_and_reloads(session: Session) -> None:
     assert event_count == len(events) == state.last_event_id
     memory_count = session.execute(select(func.count()).select_from(MemoryEpisodeRow)).scalar_one()
     assert memory_count > 0
+
+
+def test_memory_embedding_hnsw_index_exists(session: Session) -> None:
+    from sqlalchemy import text
+
+    name = session.execute(
+        text(
+            "SELECT indexname FROM pg_indexes "
+            "WHERE indexname = 'ix_memory_episode_embedding'"
+        )
+    ).scalar_one_or_none()
+    assert name == "ix_memory_episode_embedding"

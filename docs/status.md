@@ -53,8 +53,9 @@ excluded from the fast suite).
    on this machine.
 2. **Real model latency/quality** — the OpenAI-compatible path is unit-tested with a mock
    transport; no live endpoint was called. TTFT, cost, and dialogue quality targets are unmeasured.
-3. **Semantic memory quality** — the pgvector plumbing is exercised with a deterministic hash
-   embedder; no real embedding model was called, so semantic Recall@5 is unmeasured.
+3. **Semantic memory quality** — pgvector storage, HNSW index, and SQL cosine retrieval are
+   exercised with a deterministic hash embedder; no real embedding model was called, so
+   semantic Recall@5 is unmeasured.
 4. **Narrative quality** — no human ratings for coherence/surprise/causal plausibility.
 5. **Causal coverage** — instrumented via `tools/report_history.py`; the 400-day run shows 100%
    coverage on important events, but provenance is "the actor's previous event" (linear).

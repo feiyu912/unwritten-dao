@@ -114,16 +114,18 @@ def retrieve_memories(
     recent_event_ids: list[int] | None = None,
     top_k: int | None = None,
 ) -> list[dict[str, Any]]:
-    rows = (
-        session.execute(
-            select(MemoryEpisodeRow)
-            .where(MemoryEpisodeRow.npc_id == uuid.UUID(npc_id))
-            .order_by(MemoryEpisodeRow.created_tick.desc(), MemoryEpisodeRow.memory_id.desc())
-            .limit(200)
-        )
-        .scalars()
-        .all()
+    query = " ".join(
+        goal.kind for goal in state.npcs[npc_id].goals if goal.status == "active"
     )
+    query_embedding: list[float] | None = None
+    provider = build_embedding_provider()
+    if provider is not None:
+        try:
+            query_embedding = provider.embed_many([query or "memory"])[0]
+        except Exception as exc:
+            LOGGER.warning("query embedding failed, falling back to lexical: %s", exc)
+
+    rows = _candidate_rows(session, npc_id, query_embedding)
     if not rows:
         return []
     episodes = [
@@ -140,14 +142,6 @@ def retrieve_memories(
         for row in rows
     ]
     store = InMemoryEpisodeStore(episodes)
-    query = " ".join(goal.kind for goal in state.npcs[npc_id].goals if goal.status == "active")
-    query_embedding = None
-    provider = build_embedding_provider()
-    if provider is not None:
-        try:
-            query_embedding = provider.embed_many([query or "memory"])[0]
-        except Exception as exc:
-            LOGGER.warning("query embedding failed, falling back to lexical: %s", exc)
     hits = store.retrieve(
         npc_id=npc_id,
         now_tick=state.tick,
@@ -166,6 +160,53 @@ def retrieve_memories(
         }
         for episode in hits
     ]
+
+
+def _candidate_rows(
+    session: Session, npc_id: str, query_embedding: list[float] | None
+) -> list[MemoryEpisodeRow]:
+    npc_uuid = uuid.UUID(npc_id)
+    if query_embedding is None:
+        return list(
+            session.execute(
+                select(MemoryEpisodeRow)
+                .where(MemoryEpisodeRow.npc_id == npc_uuid)
+                .order_by(
+                    MemoryEpisodeRow.created_tick.desc(),
+                    MemoryEpisodeRow.memory_id.desc(),
+                )
+                .limit(200)
+            )
+            .scalars()
+            .all()
+        )
+    vector_rows = list(
+        session.execute(
+            select(MemoryEpisodeRow)
+            .where(
+                MemoryEpisodeRow.npc_id == npc_uuid,
+                MemoryEpisodeRow.embedding.isnot(None),
+            )
+            .order_by(MemoryEpisodeRow.embedding.cosine_distance(query_embedding))
+            .limit(100)
+        )
+        .scalars()
+        .all()
+    )
+    lexical_rows = list(
+        session.execute(
+            select(MemoryEpisodeRow)
+            .where(
+                MemoryEpisodeRow.npc_id == npc_uuid,
+                MemoryEpisodeRow.embedding.is_(None),
+            )
+            .order_by(MemoryEpisodeRow.created_tick.desc())
+            .limit(100)
+        )
+        .scalars()
+        .all()
+    )
+    return vector_rows + lexical_rows
 
 
 __all__ = ["memory_candidates", "record_event_memories", "retrieve_memories"]
