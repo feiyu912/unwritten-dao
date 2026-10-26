@@ -39,7 +39,8 @@ SQLite; JSONB semantics and `CREATE EXTENSION vector` are part of the schema con
 
 ## R1 limitations
 
-- `/v1/dialogue` is still a deterministic placeholder; the planning path is LLM-backed.
+- `/v1/dialogue` uses the configured provider (`llm-mock` or `openai`) and falls back to a
+  deterministic in-character line when no provider is configured or the call fails.
 - Committed events write `memory_episode` rows and observations retrieve the top-5 ranked
   episodes. Embeddings remain null; retrieval is deterministic lexical scoring until an
   embedding provider is configured.

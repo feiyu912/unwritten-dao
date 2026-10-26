@@ -88,3 +88,19 @@ def test_openai_compatible_provider_raises_on_empty_content() -> None:
     )
     with pytest.raises(ProviderError):
         provider.complete(system="s", user="u")
+
+
+def test_complete_text_omits_json_mode() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["body"] = json.loads(request.content)
+        return httpx.Response(200, json=_completion("道友请留步。"))
+
+    provider = OpenAICompatibleProvider(
+        base_url="http://127.0.0.1:8080/v1",
+        model="m",
+        transport=httpx.MockTransport(handler),
+    )
+    assert provider.complete_text(system="s", user="u") == "道友请留步。"
+    assert "response_format" not in captured["body"]

@@ -31,6 +31,7 @@ from world_core import snapshot as core_snapshot
 from world_server.agent_policy import policy_for
 from world_server.config import SETTINGS
 from world_server.db import get_engine, get_session_factory, session_dependency
+from world_server.dialogue import generate_dialogue_reply
 from world_server.memory_store import retrieve_memories
 from world_server.repository import (
     IdempotencyConflict,
@@ -203,10 +204,28 @@ def create_app() -> FastAPI:
         npc = state.npcs.get(str(payload.get("npc_id"))) if payload.get("npc_id") else None
         if npc is None:
             raise NotFound(f"unknown npc {payload.get('npc_id')}")
-        return {
-            "reply_text": f"（{npc.name}沉默不语。R1 服务器尚未接入语言模型。）",
-            "proposal": None,
-        }
+        if not npc.alive:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "npc_dead", "message": f"{npc.name} is dead"},
+            )
+        message = payload.get("message")
+        if not isinstance(message, str) or not message.strip():
+            raise HTTPException(
+                status_code=422,
+                detail={"code": "invalid_message", "message": "message must be non-empty"},
+            )
+        player = state.npcs.get(str(payload.get("player_id") or state.player_id))
+        if player is None:
+            raise NotFound("unknown player")
+        try:
+            reply = generate_dialogue_reply(state, npc, player, message.strip()[:2000])
+        except RuntimeError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail={"code": "agent_provider_misconfigured", "message": str(exc)},
+            ) from exc
+        return {"reply_text": reply, "proposal": None}
 
     @app.post("/v1/saves", status_code=201)
     def create_save(session: SessionDep, payload: dict[str, Any] | None = None) -> dict[str, Any]:

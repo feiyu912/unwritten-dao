@@ -276,3 +276,50 @@ def test_observation_and_prompt_include_relevant_memories(
     ).scalar_one()
     assert "RELEVANT_MEMORIES" in row.user_prompt
     assert "secret realm" in row.user_prompt
+
+
+def test_dialogue_placeholder_without_provider(client: TestClient) -> None:
+    response = client.post(
+        "/v1/dialogue",
+        json={"npc_id": PROTAGONIST_ID, "player_id": PLAYER_ID, "message": "道友可曾见过残图？"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["reply_text"]
+    assert body["proposal"] is None
+
+
+def test_dialogue_mock_provider(client: TestClient, monkeypatch: Any) -> None:
+    monkeypatch.setenv("AGENT_PROVIDER", "llm-mock")
+    monkeypatch.setenv("LLM_MOCK_DIALOGUE_REPLY", "此处不是说话的地方。")
+    response = client.post(
+        "/v1/dialogue",
+        json={"npc_id": PROTAGONIST_ID, "player_id": PLAYER_ID, "message": "借一步说话。"},
+    )
+    assert response.status_code == 200
+    assert response.json()["reply_text"] == "此处不是说话的地方。"
+
+
+def test_dialogue_rejects_empty_message_and_dead_npc(client: TestClient) -> None:
+    empty = client.post(
+        "/v1/dialogue",
+        json={"npc_id": PROTAGONIST_ID, "player_id": PLAYER_ID, "message": "   "},
+    )
+    assert empty.status_code == 422
+
+    unknown = client.post(
+        "/v1/dialogue",
+        json={"npc_id": "00000000-0000-4000-8000-000000000000", "message": "有人吗？"},
+    )
+    assert unknown.status_code == 404
+
+
+def test_dialogue_openai_misconfigured_returns_503(client: TestClient, monkeypatch: Any) -> None:
+    monkeypatch.setenv("AGENT_PROVIDER", "openai")
+    monkeypatch.delenv("LLM_BASE_URL", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+    response = client.post(
+        "/v1/dialogue",
+        json={"npc_id": PROTAGONIST_ID, "player_id": PLAYER_ID, "message": "你好。"},
+    )
+    assert response.status_code == 503

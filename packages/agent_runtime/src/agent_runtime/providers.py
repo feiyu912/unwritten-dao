@@ -36,18 +36,25 @@ class OpenAICompatibleProvider:
         self._transport = transport
 
     def complete(self, *, system: str, user: str) -> str:
+        return self._chat(system=system, user=user, json_mode=True)
+
+    def complete_text(self, *, system: str, user: str) -> str:
+        return self._chat(system=system, user=user, json_mode=False)
+
+    def _chat(self, *, system: str, user: str, json_mode: bool) -> str:
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         body: dict[str, Any] = {
             "model": self.model,
             "temperature": self.temperature,
-            "response_format": {"type": "json_object"},
             "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
             ],
         }
+        if json_mode:
+            body["response_format"] = {"type": "json_object"}
         try:
             with httpx.Client(
                 timeout=self.timeout,
