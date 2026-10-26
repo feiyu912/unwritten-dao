@@ -227,7 +227,7 @@ def _items() -> dict[str, Item]:
             properties={
                 "points_to": LOC_MISTY_VALLEY,
                 "realm_id": REALM_ANCIENT_CAVE,
-                "description": "半幅兽皮图，标注迷雾谷深处有一处古修遗府。",  # noqa: RUF001
+                "description": "半幅兽皮图，标注迷雾谷深处有一处古修遗府。",
             },
         ),
         ITEM_FOUNDATION_PILL: Item(
@@ -236,7 +236,7 @@ def _items() -> dict[str, Item]:
             kind="pill",
             unique=True,
             hidden=True,
-            properties={"quality": 1.0, "description": "古修遗留的筑基丹，药力浑厚。"},  # noqa: RUF001
+            properties={"quality": 1.0, "description": "古修遗留的筑基丹，药力浑厚。"},
         ),
         ITEM_SPIRIT_SWORD: Item(
             item_id=ITEM_SPIRIT_SWORD,

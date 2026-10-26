@@ -156,7 +156,7 @@ PROPOSAL_EXAMPLE = {
     "arguments": {"to_location_id": "ruined_temple"},
     "valid_for_ticks": 7,
     "memory_refs": [100],
-    "rationale_short": "洞府图在破庙，先去取图。",  # noqa: RUF001
+    "rationale_short": "洞府图在破庙，先去取图。",
     "confidence": 0.82,
 }
 
