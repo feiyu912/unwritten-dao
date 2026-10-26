@@ -17,6 +17,11 @@ from world_core.commands import (
 from world_core.engine import advance_time, apply_command, validate_state
 from world_core.errors import CommandRejected, SnapshotError
 from world_core.events import EventType, WorldEvent
+from world_core.goal_evolution import (
+    apply_breakthrough_goal_progress,
+    apply_death_goal_evolution,
+    expire_obsolete_goals,
+)
 from world_core.models import (
     ActiveAction,
     Belief,
@@ -100,10 +105,13 @@ __all__ = [
     "WorldEvent",
     "WorldState",
     "advance_time",
+    "apply_breakthrough_goal_progress",
     "apply_command",
+    "apply_death_goal_evolution",
     "belief_key",
     "canonical_json",
     "create_world",
+    "expire_obsolete_goals",
     "faction_id",
     "load_ruleset",
     "make_command",

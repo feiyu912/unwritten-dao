@@ -6,6 +6,7 @@ from typing import Any, NoReturn
 from world_core.commands import WorldCommand
 from world_core.errors import CommandRejected
 from world_core.events import EventType, WorldEvent
+from world_core.goal_evolution import apply_death_goal_evolution
 from world_core.models import (
     Belief,
     Npc,
@@ -170,6 +171,7 @@ def kill_npc(
     emitter: Emitter,
     parents: list[int] | None = None,
     rng_seed: int = 0,
+    killer_id: str | None = None,
 ) -> int:
     if not npc.alive:
         return 0
@@ -178,7 +180,7 @@ def kill_npc(
     npc.death_tick = state.tick
     npc.death_cause = cause
     npc.active_action = None
-    return emitter(
+    death_event_id = emitter(
         "NPC_DIED",
         actor_ids=[npc.npc_id],
         location_id=npc.location_id,
@@ -186,10 +188,18 @@ def kill_npc(
         rng_seed=rng_seed,
         payload={
             "cause": cause,
+            "killer_id": killer_id,
             "age_ticks": state.tick - npc.birth_tick,
             "lifespan_ticks": npc.lifespan_ticks,
         },
     )
+    apply_death_goal_evolution(
+        state,
+        npc,
+        death_event_id=death_event_id,
+        killer_id=killer_id,
+    )
+    return death_event_id
 
 
 def owned_item_id(state: WorldState, npc: Npc, item_id: str) -> None:

@@ -4,6 +4,7 @@ from typing import Any
 
 from world_core.commands import CommandResult, CommandSource, WorldCommand, make_command
 from world_core.errors import CommandRejected
+from world_core.goal_evolution import expire_obsolete_goals
 from world_core.handlers import (
     handle_attack,
     handle_attempt_breakthrough,
@@ -143,6 +144,7 @@ def _process_tick(state: WorldState, emit: Emitter) -> None:
         _settle_factions(state, emit)
     _expire_realms(state, emit)
     _expire_opportunities(state, emit)
+    expire_obsolete_goals(state)
 
 
 def _cultivate_day(state: WorldState, npc: Npc, action: Any) -> None:
@@ -260,6 +262,18 @@ def validate_state(state: WorldState) -> list[str]:
             problems.append(f"{npc.npc_id} is dead without death_tick")
         if npc.last_event_id is not None and npc.last_event_id > state.last_event_id:
             problems.append(f"{npc.npc_id} references a future event id")
+        goal_ids = [goal.goal_id for goal in npc.goals]
+        if len(set(goal_ids)) != len(goal_ids):
+            problems.append(f"{npc.npc_id} has duplicate goal ids")
+        for goal in npc.goals:
+            if goal.origin_event_id is not None and goal.origin_event_id > state.last_event_id:
+                problems.append(
+                    f"{npc.npc_id} goal {goal.goal_id} references a future origin event id"
+                )
+            if goal.last_updated_tick is not None and goal.last_updated_tick > state.tick:
+                problems.append(
+                    f"{npc.npc_id} goal {goal.goal_id} has a future last_updated_tick"
+                )
         for known in npc.known_locations:
             if known not in state.locations:
                 problems.append(f"{npc.npc_id} knows unknown location {known}")
@@ -300,6 +314,8 @@ def validate_state(state: WorldState) -> list[str]:
             problems.append(f"visible item {item.item_id} has no container")
         if item.owner_id is not None and item.location_id is not None:
             problems.append(f"item {item.item_id} has two containers")
+        if item.acquired_event_id is not None and item.acquired_event_id > state.last_event_id:
+            problems.append(f"item {item.item_id} references a future acquisition event id")
 
     for key, rel in state.relationships.items():
         expected = relationship_key(rel.source_npc_id, rel.target_npc_id)
@@ -326,6 +342,20 @@ def validate_state(state: WorldState) -> list[str]:
         for discoverer_id in realm.discovered_by:
             if discoverer_id not in state.npcs:
                 problems.append(f"{key} discovered by unknown NPC {discoverer_id}")
+        for npc_id, event_id in realm.discovery_event_ids.items():
+            if npc_id not in state.npcs:
+                problems.append(f"{key} discovery event for unknown NPC {npc_id}")
+            elif npc_id not in realm.discovered_by:
+                problems.append(f"{key} discovery event for {npc_id} without discovery")
+            if event_id > state.last_event_id:
+                problems.append(f"{key} discovery event {event_id} is in the future")
+        for npc_id, event_id in realm.entry_event_ids.items():
+            if npc_id not in state.npcs:
+                problems.append(f"{key} entry event for unknown NPC {npc_id}")
+            elif npc_id not in realm.discovered_by:
+                problems.append(f"{key} entry event for undiscovered NPC {npc_id}")
+            if event_id > state.last_event_id:
+                problems.append(f"{key} entry event {event_id} is in the future")
 
     for key, opportunity in state.opportunities.items():
         if key != opportunity.opportunity_id:
