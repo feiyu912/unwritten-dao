@@ -80,7 +80,7 @@ def load_command_docs(path: Path) -> list[dict[str, Any]]:
 
 def _parse_commands(core: Any, docs: list[dict[str, Any]]) -> list[Any]:
     """Convert raw contract objects into world_core's typed command model."""
-    command_cls = core.models.WorldCommand
+    command_cls = core.commands.WorldCommand
     return [command_cls.model_validate(doc) for doc in docs]
 
 
