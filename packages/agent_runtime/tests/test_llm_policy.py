@@ -183,3 +183,25 @@ def test_utility_policy_still_available_as_explicit_fallback() -> None:
     observation = build_observation(state, PROTAGONIST_ID)
     proposal = UtilityPolicy().decide(observation)
     assert proposal.intent in observation.available_actions
+
+
+def test_planning_prompt_stays_within_context_budget() -> None:
+    state = create_world(42)
+    observation = build_observation(
+        state,
+        PROTAGONIST_ID,
+        memories=[
+            {
+                "event_id": index,
+                "tick": index,
+                "summary": f"第 {index} 件旧事：在落鸦林遭遇赤霄门巡逻",
+                "importance": 0.8,
+                "emotional_valence": -0.3,
+            }
+            for index in range(1, 9)
+        ],
+    )
+    _, user = build_planning_prompt(observation)
+    assert len(user) < 8000
+    assert "RELEVANT_MEMORIES" in user
+    assert "AVAILABLE_ACTIONS" in user
