@@ -142,9 +142,7 @@ class NpcKnowledgeView:
             private_state=PrivateState(
                 inventory=inventory,
                 goals=tuple(sorted(observation.goals, key=lambda row: row.goal_id)),
-                relationships=tuple(
-                    sorted(observation.relationships, key=lambda row: row.npc_id)
-                ),
+                relationships=tuple(sorted(observation.relationships, key=lambda row: row.npc_id)),
             ),
             beliefs=tuple(
                 sorted(
@@ -187,8 +185,7 @@ class NpcKnowledgeView:
             )
         if facts.visible_npcs:
             fact_lines.extend(
-                f"visible_npc: {npc.npc_id} ({npc.name}, realm={npc.realm} "
-                f"stage={npc.stage})"
+                f"visible_npc: {npc.npc_id} ({npc.name}, realm={npc.realm} stage={npc.stage})"
                 for npc in facts.visible_npcs
             )
         if facts.known_locations:
@@ -224,8 +221,7 @@ class NpcKnowledgeView:
         ] or ["none"]
 
         memory_lines = [
-            f"E{memory.event_id} (tick {memory.tick}): {memory.summary}"
-            for memory in self.memories
+            f"E{memory.event_id} (tick {memory.tick}): {memory.summary}" for memory in self.memories
         ] or ["none"]
 
         return {
@@ -257,25 +253,15 @@ class NpcKnowledgeView:
                 continue
             kept_locations.append(
                 location.model_copy(
-                    update={
-                        "adjacent_ids": [
-                            adj for adj in location.adjacent_ids if adj in known
-                        ]
-                    }
+                    update={"adjacent_ids": [adj for adj in location.adjacent_ids if adj in known]}
                 )
             )
         redacted_facts = replace(
             facts,
-            visible_items=tuple(
-                item for item in facts.visible_items if item.item_id in known
-            ),
-            visible_npcs=tuple(
-                npc for npc in facts.visible_npcs if npc.npc_id in known
-            ),
+            visible_items=tuple(item for item in facts.visible_items if item.item_id in known),
+            visible_npcs=tuple(npc for npc in facts.visible_npcs if npc.npc_id in known),
             visible_opportunities=tuple(
-                opp
-                for opp in facts.visible_opportunities
-                if opp.opportunity_id in known
+                opp for opp in facts.visible_opportunities if opp.opportunity_id in known
             ),
             known_locations=tuple(kept_locations),
         )
@@ -385,9 +371,7 @@ def explain_action(proposal: ActionProposal, observation: NpcObservation) -> str
         goal_line = "goal: none selected"
     elif proposal.goal_id in goals:
         goal = goals[proposal.goal_id]
-        goal_line = (
-            f"goal: {goal.goal_id} ({goal.kind}, priority {goal.priority:.2f})"
-        )
+        goal_line = f"goal: {goal.goal_id} ({goal.kind}, priority {goal.priority:.2f})"
     else:
         goal_line = f"goal: {proposal.goal_id} (not present in observation)"
 
@@ -407,8 +391,7 @@ def explain_action(proposal: ActionProposal, observation: NpcObservation) -> str
         evidence_line = "evidence: no memory or event references were cited"
 
     lines = [
-        f"npc {observation.npc_id} at tick {observation.tick} proposed "
-        f"{proposal.intent}",
+        f"npc {observation.npc_id} at tick {observation.tick} proposed {proposal.intent}",
         goal_line,
         f"rationale: {proposal.rationale_short}",
         evidence_line,

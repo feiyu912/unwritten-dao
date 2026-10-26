@@ -95,10 +95,13 @@ def test_initial_facts_hide_secret_interior_and_pill() -> None:
     assert LOC_ANCIENT_CAVE not in facts_only
     assert ITEM_FOUNDATION_PILL not in facts_only
     assert LOC_ANCIENT_CAVE not in view.known_location_ids
-    assert view.validate_boundary(
-        secret_interior_ids=[LOC_ANCIENT_CAVE],
-        hidden_item_ids=[ITEM_FOUNDATION_PILL],
-    ) == []
+    assert (
+        view.validate_boundary(
+            secret_interior_ids=[LOC_ANCIENT_CAVE],
+            hidden_item_ids=[ITEM_FOUNDATION_PILL],
+        )
+        == []
+    )
 
     # Beliefs are preserved in their own clearly labelled, fallible section.
     sections = view.to_prompt_sections()
@@ -133,10 +136,13 @@ def test_discovery_promotes_interior_and_explanation_cites_valid_ids_only() -> N
     assert LOC_ANCIENT_CAVE in view.known_location_ids
     facts_only = "\n".join(view.to_prompt_sections()[FACT_SECTION])
     assert LOC_ANCIENT_CAVE in facts_only
-    assert view.validate_boundary(
-        secret_interior_ids=[LOC_ANCIENT_CAVE],
-        hidden_item_ids=[ITEM_FOUNDATION_PILL],
-    ) == []
+    assert (
+        view.validate_boundary(
+            secret_interior_ids=[LOC_ANCIENT_CAVE],
+            hidden_item_ids=[ITEM_FOUNDATION_PILL],
+        )
+        == []
+    )
 
     explanation = explain_action(_proposal([valid_event.event_id, 999_999]), observation)
     assert "goal_breakthrough" in explanation
@@ -174,8 +180,7 @@ def test_redact_unknown_removes_hallucinated_fact_location() -> None:
 
     violations = tainted.validate_boundary()
     assert any(
-        row.code == "unknown_location_in_facts"
-        and "location_hallucinated_palace" in row.ids
+        row.code == "unknown_location_in_facts" and "location_hallucinated_palace" in row.ids
         for row in violations
     )
 

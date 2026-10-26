@@ -2,6 +2,15 @@
 
 from __future__ import annotations
 
+from agent_runtime.decision import (
+    ActionCandidate,
+    CandidateGenerator,
+    DecisionModel,
+    DecisionModelPolicy,
+    PolicyDecisionRecord,
+    StrategicGoal,
+    UtilityCandidateGenerator,
+)
 from agent_runtime.embeddings import (
     EmbeddingProvider,
     HashingEmbeddingProvider,
@@ -12,6 +21,15 @@ from agent_runtime.inference import (
     MockInferenceProvider,
     ReplayExhausted,
     ReplayInferenceProvider,
+)
+from agent_runtime.knowledge import (
+    KnowledgeBoundaryError,
+    KnowledgeViolation,
+    NpcKnowledgeView,
+    PrivateState,
+    WorldFacts,
+    explain_action,
+    explain_event_chain,
 )
 from agent_runtime.llm import (
     DecisionRecord,
@@ -58,20 +76,27 @@ from agent_runtime.validator import (
 
 __all__ = [
     "IMPORTANCE",
+    "ActionCandidate",
     "ActionProposal",
     "ActiveActionView",
     "AgentPolicy",
+    "CandidateGenerator",
+    "DecisionModel",
+    "DecisionModelPolicy",
     "DecisionRecord",
     "EmbeddingProvider",
     "HashingEmbeddingProvider",
     "InMemoryEpisodeStore",
     "InferenceProvider",
+    "KnowledgeBoundaryError",
+    "KnowledgeViolation",
     "KnownLocation",
     "LLMPolicy",
     "MemoryEpisode",
     "MemoryRecord",
     "MemoryStore",
     "MockInferenceProvider",
+    "NpcKnowledgeView",
     "NpcObservation",
     "ObservationSelf",
     "ObservedBelief",
@@ -80,6 +105,8 @@ __all__ = [
     "ObservedRelationship",
     "OpenAICompatibleEmbeddingProvider",
     "OpenAICompatibleProvider",
+    "PolicyDecisionRecord",
+    "PrivateState",
     "ProposalIntent",
     "ProposalParseError",
     "ProposalRejected",
@@ -90,14 +117,19 @@ __all__ = [
     "ReplayInferenceProvider",
     "RivalryPolicy",
     "StoryThread",
+    "StrategicGoal",
+    "UtilityCandidateGenerator",
     "UtilityPolicy",
     "VisibleNpc",
     "VisibleOpportunity",
+    "WorldFacts",
     "build_observation",
     "build_planning_prompt",
     "cosine",
     "decide_and_apply",
     "decide_command",
+    "explain_action",
+    "explain_event_chain",
     "find_story_threads",
     "parse_proposal",
     "proposal_to_command",
