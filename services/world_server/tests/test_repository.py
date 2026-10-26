@@ -312,3 +312,42 @@ def test_memories_get_pgvector_embeddings(session: Session, monkeypatch) -> None
     current = load_state(session)
     recalled = retrieve_memories(session, current, actor.npc_id)
     assert recalled
+
+
+def test_two_sessions_share_state_version_and_idempotency(session: Session) -> None:
+    from world_server.db import get_engine, get_session_factory
+
+    state = bootstrap(session, seed=42)
+    command = make_command(
+        state, PROTAGONIST_ID, "wait", {"ticks": 1}, idempotency_key="race:1", source="test"
+    )
+    other = make_command(
+        state, PROTAGONIST_ID, "wait", {"ticks": 1}, idempotency_key="race:2", source="test"
+    )
+    factory = get_session_factory(get_engine())
+    first = factory()
+    second = factory()
+    try:
+        result = apply_command(first, command)
+        replay = apply_command(second, command)
+        assert replay.model_dump(mode="json") == result.model_dump(mode="json")
+
+        current = load_state(second)
+        stale_command = make_command(
+            current,
+            PROTAGONIST_ID,
+            "wait",
+            {"ticks": 1},
+            idempotency_key="race:3",
+            source="test",
+        )
+        stale_command.expected_state_version = 0
+        with pytest.raises(StaleStateVersion):
+            apply_command(second, stale_command)
+
+        assert other.expected_state_version == 0
+        with pytest.raises(StaleStateVersion):
+            apply_command(second, other)
+    finally:
+        first.close()
+        second.close()

@@ -104,6 +104,11 @@ jobs:
       - name: Integration tests
         run: uv run pytest services/world_server/tests -m integration -q
 
+      - name: Migration round trip
+        run: |
+          uv run alembic -c services/world_server/alembic.ini downgrade base
+          uv run alembic -c services/world_server/alembic.ini upgrade head
+
       - name: Record result label
         if: always()
         run: |
