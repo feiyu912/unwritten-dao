@@ -56,6 +56,7 @@ def test_health_and_snapshot_contract(client: TestClient) -> None:
 
 
 def test_command_lifecycle_happy_idempotent_stale(client: TestClient) -> None:
+    initial = client.get("/v1/world/snapshot").json()
     payload = _move_command(client, 0, 0, key="api:move:1")
     response = client.post("/v1/commands", json=payload)
     assert response.status_code == 200
@@ -68,7 +69,9 @@ def test_command_lifecycle_happy_idempotent_stale(client: TestClient) -> None:
     assert duplicate.status_code == 200
     assert duplicate.json() == body
 
-    events = client.get("/v1/world/events", params={"after": 0}).json()["events"]
+    events = client.get("/v1/world/events", params={"after": initial["last_event_id"]}).json()[
+        "events"
+    ]
     assert len(events) == 1
 
     stale = _move_command(client, 1, 0, key="api:move:2")
@@ -348,7 +351,9 @@ def test_websocket_streams_committed_events(client: TestClient) -> None:
         "arguments": {"to_location_id": LOC_BLACKWOOD_FOREST},
         "source": "player",
     }
-    with client.websocket_connect("/v1/events/stream?after=0") as websocket:
+    with client.websocket_connect(
+        f"/v1/events/stream?after={snapshot['last_event_id']}"
+    ) as websocket:
         response = client.post("/v1/commands", json=command)
         assert response.status_code == 200
         event = websocket.receive_json()

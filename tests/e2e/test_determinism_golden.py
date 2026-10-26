@@ -11,7 +11,7 @@ from world_core import (
 # Cross-platform gate: this exact history must hash identically on macOS ARM64
 # and Linux x86_64 (CI runs both). Changing simulation rules intentionally
 # requires updating this golden value in the same PR.
-GOLDEN_CHECKSUM = "sha256:2d7c576be985e37484b8532920248fb9c7e7fdacde7aa77351362da3ac0ad4db"
+GOLDEN_CHECKSUM = "sha256:ef134aa55c69e2e0c065a5f2c7a3c3c47d6129c2a108502e8c73d5d942d9b15e"
 
 
 def test_twenty_year_rules_checksum_is_cross_platform_stable() -> None:

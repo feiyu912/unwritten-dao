@@ -271,9 +271,7 @@ def validate_state(state: WorldState) -> list[str]:
                     f"{npc.npc_id} goal {goal.goal_id} references a future origin event id"
                 )
             if goal.last_updated_tick is not None and goal.last_updated_tick > state.tick:
-                problems.append(
-                    f"{npc.npc_id} goal {goal.goal_id} has a future last_updated_tick"
-                )
+                problems.append(f"{npc.npc_id} goal {goal.goal_id} has a future last_updated_tick")
         for known in npc.known_locations:
             if known not in state.locations:
                 problems.append(f"{npc.npc_id} knows unknown location {known}")

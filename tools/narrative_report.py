@@ -20,6 +20,7 @@ from world_core import (
     advance_time,
     apply_command,
     create_world,
+    genesis_events,
     state_checksum,
     validate_state,
 )
@@ -52,7 +53,7 @@ def main(argv: list[str] | None = None) -> int:
 
     state = create_world(args.seed)
     policy = UtilityPolicy()
-    events = {}
+    events = {event.event_id: event for event in genesis_events(state)}
     type_counts: Counter[str] = Counter()
     for _ in range(args.years * 365):
         for npc in sorted(state.npcs.values(), key=lambda item: item.npc_id):

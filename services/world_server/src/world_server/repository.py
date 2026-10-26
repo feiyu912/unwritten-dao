@@ -12,7 +12,7 @@ from world_core.commands import CommandResult
 from world_core.events import WorldEvent
 
 from agent_runtime import ActionProposal, DecisionRecord, PolicyDecisionRecord
-from world_core import CommandRejected, WorldCommand, WorldState, state_checksum
+from world_core import CommandRejected, WorldCommand, WorldState, genesis_events, state_checksum
 from world_core import apply_command as core_apply
 from world_core import create_world as core_create_world
 from world_core import snapshot as core_snapshot
@@ -68,6 +68,9 @@ def bootstrap(session: Session, seed: int = 42) -> WorldState:
         state=state.model_dump(mode="json"),
     )
     session.add(row)
+    session.flush()
+    for event in genesis_events(state):
+        session.add(_event_row(uuid.UUID(state.world_id), event))
     session.commit()
     return state
 

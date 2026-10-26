@@ -105,7 +105,9 @@ def _start_cultivation(core: Any, state: Any) -> tuple[int, int]:
     return started, events
 
 
-def _final_violations(core: Any, state: Any, target_tick: int, events: int) -> list[str]:
+def _final_violations(
+    core: Any, state: Any, target_tick: int, events: int, base_event_id: int
+) -> list[str]:
     """Collect invariant violations; an empty list means the run is valid."""
     violations = list(core.validate_state(state))
     if state.tick != target_tick:
@@ -127,8 +129,10 @@ def _final_violations(core: Any, state: Any, target_tick: int, events: int) -> l
         owners[item_id] = item.owner_id
 
     last_event_id = getattr(state, "last_event_id", events)
-    if last_event_id != events:
-        violations.append(f"last_event_id {last_event_id} != emitted events {events}")
+    if last_event_id != base_event_id + events:
+        violations.append(
+            f"last_event_id {last_event_id} != genesis {base_event_id} + emitted {events}"
+        )
     return violations
 
 
@@ -139,6 +143,7 @@ def run_benchmark(core: Any, args: argparse.Namespace) -> int:
         raise ValueError(f"--chunk-days must be between 1 and {MAX_CHUNK_DAYS}")
 
     state = core.create_world(seed=args.seed)
+    base_event_id = state.last_event_id
     npc_count = len(state.npcs)
     if npc_count != args.npcs:
         raise ValueError(f"seed {args.seed} generated {npc_count} NPCs but --npcs is {args.npcs}")
@@ -185,7 +190,7 @@ def run_benchmark(core: Any, args: argparse.Namespace) -> int:
         f"ticks={simulated} npcs={npc_count} alive={alive} events={events}"
     )
 
-    violations = _final_violations(core, state, target_tick, events)
+    violations = _final_violations(core, state, target_tick, events, base_event_id)
     if violations:
         print(f"state validation failed with {len(violations)} violation(s):", file=sys.stderr)
         for violation in violations:

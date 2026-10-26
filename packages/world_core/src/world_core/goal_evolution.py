@@ -45,8 +45,7 @@ def revenge_goal_id(npc_id: str, victim_id: str, killer_id: str, death_event_id:
 def _has_revenge_against(npc: Npc, killer_id: str, goal_id: str) -> bool:
     """A survivor needs at most one revenge goal per killer, ever."""
     return any(
-        goal.kind == "revenge"
-        and (goal.goal_id == goal_id or goal_target_id(goal) == killer_id)
+        goal.kind == "revenge" and (goal.goal_id == goal_id or goal_target_id(goal) == killer_id)
         for goal in npc.goals
     )
 
@@ -95,9 +94,7 @@ def apply_death_goal_evolution(
         npc = state.npcs[npc_key]
         if not npc.alive or npc.npc_id in {victim.npc_id, killer_id}:
             continue
-        relationship = state.relationships.get(
-            relationship_key(npc.npc_id, victim.npc_id)
-        )
+        relationship = state.relationships.get(relationship_key(npc.npc_id, victim.npc_id))
         if relationship is None:
             continue
         if (
@@ -127,9 +124,7 @@ def apply_death_goal_evolution(
     return changed
 
 
-def apply_breakthrough_goal_progress(
-    npc: Npc, *, event_id: int, tick: int
-) -> list[str]:
+def apply_breakthrough_goal_progress(npc: Npc, *, event_id: int, tick: int) -> list[str]:
     """Mark matching active breakthrough goals achieved; return their ids."""
     achieved: list[str] = []
     for goal in npc.goals:

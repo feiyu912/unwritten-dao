@@ -8,7 +8,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 SCRIPT = (
     "go 山间破庙; take 残破洞府图; go 迷雾谷; investigate; "
-    "go 无名古修洞府; claim 洞府丹藏; look; quit"
+    "go 无名古修洞府; " + "; ".join(["claim 洞府丹藏"] * 10) + "; look; quit"
 )
 
 

@@ -48,6 +48,7 @@ def test_bootstrap_creates_valid_world_once(session: Session) -> None:
 
 def test_apply_command_is_atomic_idempotent_and_versioned(session: Session) -> None:
     state = bootstrap(session, seed=42)
+    base_events = session.execute(select(func.count()).select_from(WorldEventRow)).scalar_one()
     command = make_command(
         state,
         PROTAGONIST_ID,
@@ -61,7 +62,7 @@ def test_apply_command_is_atomic_idempotent_and_versioned(session: Session) -> N
     assert len(result.events) == 1
 
     event_count = session.execute(select(func.count()).select_from(WorldEventRow)).scalar_one()
-    assert event_count == 1
+    assert event_count == base_events + 1
     log_count = session.execute(select(func.count()).select_from(CommandLogRow)).scalar_one()
     assert log_count == 1
 
@@ -69,7 +70,7 @@ def test_apply_command_is_atomic_idempotent_and_versioned(session: Session) -> N
     assert replayed.state_version == result.state_version
     assert replayed.model_dump(mode="json") == result.model_dump(mode="json")
     event_count = session.execute(select(func.count()).select_from(WorldEventRow)).scalar_one()
-    assert event_count == 1
+    assert event_count == base_events + 1
 
     fresh = load_state(session)
     stale = make_command(
@@ -396,6 +397,7 @@ def test_agent_history_persists_and_reloads(session: Session) -> None:
     from world_server.models import MemoryEpisodeRow
 
     state = bootstrap(session, seed=42)
+    base_events = session.execute(select(func.count()).select_from(WorldEventRow)).scalar_one()
     events = simulate_days(state, 10)
     persist_history(session, state, events)
 
@@ -404,7 +406,7 @@ def test_agent_history_persists_and_reloads(session: Session) -> None:
     assert state_checksum(reloaded) == state_checksum(state)
     assert validate_state(reloaded) == []
     event_count = session.execute(select(func.count()).select_from(WorldEventRow)).scalar_one()
-    assert event_count == len(events) == state.last_event_id
+    assert event_count == base_events + len(events) == state.last_event_id
     memory_count = session.execute(select(func.count()).select_from(MemoryEpisodeRow)).scalar_one()
     assert memory_count > 0
 

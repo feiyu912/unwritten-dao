@@ -40,6 +40,20 @@ def _realm_access_event_id(state: WorldState, actor: Npc) -> int | None:
     return None
 
 
+def _belief_cause(state: WorldState, actor: Npc, location_id: str) -> int | None:
+    candidates = [
+        belief
+        for belief in state.beliefs.values()
+        if belief.npc_id == actor.npc_id
+        and belief.subject_key == location_id
+        and belief.source_event_id is not None
+    ]
+    if not candidates:
+        return None
+    best = max(candidates, key=lambda belief: (belief.confidence, belief.source_event_id or 0))
+    return best.source_event_id
+
+
 def handle_wait(state: WorldState, actor: Npc, arguments: dict[str, Any], emit: Emitter) -> None:
     require_idle(actor)
     ticks = require_int(arguments, "ticks", 1, 365)
@@ -287,11 +301,13 @@ def handle_transfer_item(
         item.location_id = destination_location.location_id
 
     item.acquired_event_id = emit.event_id + 1
+    belief_cause = _belief_cause(state, actor, from_id) if from_kind == "location" else None
     emit(
         "ITEM_TRANSFERRED",
         actor_ids=[actor.npc_id],
         target_ids=target_ids,
         location_id=actor.location_id,
+        parents=[belief_cause] if belief_cause is not None else [],
         rng_seed=seed_for(state, "transfer", actor.npc_id, item_id, to_id),
         payload={
             "item_id": item_id,

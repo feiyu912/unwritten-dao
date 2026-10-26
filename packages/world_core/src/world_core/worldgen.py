@@ -4,6 +4,7 @@ import uuid
 from typing import Any
 
 from world_core.checksum import SIM_VERSION
+from world_core.genesis import assign_genesis
 from world_core.models import (
     Belief,
     Faction,
@@ -720,4 +721,5 @@ def create_world(seed: int = 42) -> WorldState:
         relationships=_relationships(),
         beliefs=_beliefs(),
     )
+    assign_genesis(state)
     return state

@@ -17,6 +17,7 @@ from world_core.commands import (
 from world_core.engine import advance_time, apply_command, validate_state
 from world_core.errors import CommandRejected, SnapshotError
 from world_core.events import EventType, WorldEvent
+from world_core.genesis import assign_genesis, genesis_events
 from world_core.goal_evolution import (
     apply_breakthrough_goal_progress,
     apply_death_goal_evolution,
@@ -108,11 +109,13 @@ __all__ = [
     "apply_breakthrough_goal_progress",
     "apply_command",
     "apply_death_goal_evolution",
+    "assign_genesis",
     "belief_key",
     "canonical_json",
     "create_world",
     "expire_obsolete_goals",
     "faction_id",
+    "genesis_events",
     "load_ruleset",
     "make_command",
     "npc_id",

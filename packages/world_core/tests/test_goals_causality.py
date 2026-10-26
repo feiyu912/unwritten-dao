@@ -58,7 +58,14 @@ def test_causal_provenance_of_map_discovery_entry_claim_and_breakthrough() -> No
         },
     )
     transfer_event = next(event for event in transferred.events if event.type == "ITEM_TRANSFERRED")
-    assert transfer_event.causal_parent_ids == []
+    temple_belief = next(
+        belief
+        for belief in state.beliefs.values()
+        if belief.npc_id == actor.npc_id
+        and belief.subject_key == LOC_RUINED_TEMPLE
+        and belief.source_event_id is not None
+    )
+    assert transfer_event.causal_parent_ids == [temple_belief.source_event_id]
     assert state.items[ITEM_MAP_FRAGMENT].acquired_event_id == transfer_event.event_id
 
     moved = _send(state, actor.npc_id, "move", {"to_location_id": LOC_MISTY_VALLEY})
@@ -84,9 +91,7 @@ def test_causal_provenance_of_map_discovery_entry_claim_and_breakthrough() -> No
     realm = state.secret_realms[REALM_ANCIENT_CAVE]
     assert realm.discovery_event_ids[actor.npc_id] == discovery_event.event_id
 
-    entered = _send(
-        state, actor.npc_id, "enter_secret_realm", {"realm_id": REALM_ANCIENT_CAVE}
-    )
+    entered = _send(state, actor.npc_id, "enter_secret_realm", {"realm_id": REALM_ANCIENT_CAVE})
     entry_event = next(event for event in entered.events if event.type == "SECRET_REALM_ENTERED")
     assert entry_event.causal_parent_ids == [discovery_event.event_id]
     assert realm.entry_event_ids[actor.npc_id] == entry_event.event_id
@@ -97,9 +102,7 @@ def test_causal_provenance_of_map_discovery_entry_claim_and_breakthrough() -> No
     )
     claim_event = next(event for event in claimed.events if event.type == "OPPORTUNITY_CLAIMED")
     assert claim_event.causal_parent_ids == [entry_event.event_id]
-    assert (
-        state.items[ITEM_FOUNDATION_PILL].acquired_event_id == claim_event.event_id
-    )
+    assert state.items[ITEM_FOUNDATION_PILL].acquired_event_id == claim_event.event_id
 
     brewed = _send(
         state,
@@ -107,14 +110,10 @@ def test_causal_provenance_of_map_discovery_entry_claim_and_breakthrough() -> No
         "attempt_breakthrough",
         {"pill_item_id": ITEM_FOUNDATION_PILL},
     )
-    attempt_event = next(
-        event for event in brewed.events if event.type == "BREAKTHROUGH_ATTEMPT"
-    )
+    attempt_event = next(event for event in brewed.events if event.type == "BREAKTHROUGH_ATTEMPT")
     consume_event = next(event for event in brewed.events if event.type == "ITEM_CONSUMED")
     assert consume_event.causal_parent_ids == [claim_event.event_id]
-    assert attempt_event.causal_parent_ids == sorted(
-        {claim_event.event_id, consume_event.event_id}
-    )
+    assert attempt_event.causal_parent_ids == sorted({claim_event.event_id, consume_event.event_id})
 
     # No event above may cite a merely previous movement as its cause.
     for event in (
@@ -212,9 +211,7 @@ def test_long_term_goal_survives_many_ticks_and_snapshot_restore() -> None:
     restored_goal_ids = {goal.goal_id for goal in restored.npcs[PROTAGONIST_ID].goals}
     assert restored_goal_ids == goal_ids
     restored_breakthrough = next(
-        goal
-        for goal in restored.npcs[PROTAGONIST_ID].goals
-        if goal.goal_id == "goal_breakthrough"
+        goal for goal in restored.npcs[PROTAGONIST_ID].goals if goal.goal_id == "goal_breakthrough"
     )
     assert restored_breakthrough.status == "active"
     assert restored_breakthrough.created_tick == breakthrough.created_tick

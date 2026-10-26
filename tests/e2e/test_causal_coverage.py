@@ -8,9 +8,8 @@ def test_important_outcomes_have_true_causal_parents() -> None:
     assert report["violations"] == []
     assert report["important_events"] >= 1
     assert report["outcome_coverage"] >= 0.95, report
-    # Transfers currently have no tracked intent provenance: report the gap,
-    # do not fabricate a "previous event" cause.
-    assert report["coverage"] <= report["outcome_coverage"]
+    assert report["coverage"] >= 0.95, report
+    assert report["transfer_coverage"] >= 0.95, report
     assert report["checksum"].startswith("sha256:")
 
 
@@ -62,7 +61,5 @@ def test_moves_are_not_fake_causes_and_discovery_has_two_true_parents() -> None:
     investigate_id = next(
         event.event_id for event in investigated if event.type == "LOCATION_INVESTIGATED"
     )
-    discovery = next(
-        event for event in investigated if event.type == "SECRET_REALM_DISCOVERED"
-    )
+    discovery = next(event for event in investigated if event.type == "SECRET_REALM_DISCOVERED")
     assert set(discovery.causal_parent_ids) == {investigate_id, transfer_id}
