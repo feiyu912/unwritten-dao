@@ -127,6 +127,13 @@ unknown IDs, illegal transition, or contract-shaped arguments are wrong.
 - `state_checksum` hashes canonical JSON (`sort_keys=True`, compact separators, UTF-8).
 - `restore_snapshot` must reproduce a byte-identical checksum.
 
+## Canonical past events
+
+`create_world` assigns contiguous belief provenance ids and emits `BELIEF_ACQUIRED`
+events at tick 0 (ids 1..N) via `genesis_events(state)`. The server bootstrap persists them;
+they have no command and `state_version_after=1`. Later actions may cite these ids as true
+causes (e.g. a transfer motivated by a rumor). New worlds start with `last_event_id=N`.
+
 ## Seed world (seed=42)
 
 30 NPCs: player `谢无咎`, protagonist `沈砚`, 4 other major (sect leaders 陆玄机 / 霍燃,

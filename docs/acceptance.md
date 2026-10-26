@@ -15,7 +15,7 @@ evidence exists yet.
 | 6 | ≥99.5% proposals accepted or safely rejected with fallback | PARTIAL | 20/20 synthetic impossible plans rejected and fallback applied; real LLM rate not measured |
 | 7 | Unsupported world facts <1% | NOT RUN | requires a live model and human audit |
 | 8 | Memory Recall@5 ≥90% | PARTIAL | 10/10 toy labels and 8/8 real-history labels; real embedding model not measured |
-| 9 | ≥95% important events have upstream causes | PARTIAL | strict outcome events 3/3 = 100%; all important incl. transfers 3/4 = 75% (transfers lack intent provenance) |
+| 9 | ≥95% important events have upstream causes | PASS | canonical beliefs + true parents: 4/4 = 100% (no fabricated previous-event links) |
 | 10 | ≥80% long-term goals reach resolution or causal replanning | PARTIAL | lifecycle rules added (revenge, target death); resolved sample still 1/1 |
 | 11 | 30 NPC × 20 years <10 minutes headless | PASS (pre-change) | 0.06 s / 1.9 s / ~4–8 s measured before the provenance change |
 | 12 | 20-year event storage <1 GB | PASS (pre-change) | 21,897 events / 7,042 memories / 19.4 MB, measured before the state-schema change |
@@ -38,10 +38,10 @@ evidence exists yet.
 
 - Fast suite (decision model, knowledge boundary, UE scene layout, updated golden): green.
 - PostgreSQL integration suite: 35 tests green.
-- Strict causality: outcome events 3/3 = 100%; all important events incl. transfers 3/4 = 75%.
-  Transfers deliberately have no parent rather than a fabricated "previous event".
-- Golden checksum updated to `sha256:2d7c576b…` after the provenance/goal state fields.
-- UE layout regenerated for the new state checksum (8 locations, 30 NPCs).
+- Strict causality: 4/4 = 100% after canonical belief events; transfers cite the motivating rumor.
+  The old fabricated previous-event links remain removed.
+- Golden checksum updated to `sha256:ef134aa5…` after canonical past + provenance fields.
+- UE layout regenerated for the new state checksum (8 locations, 30 NPCs, `sha256:2d739daa…`).
 - 20-year persisted numbers in this file predate the state-schema change; the local DB must be
   reseeded with `tools.seed_history` before serving. No long benchmark was rerun in this round
   per the lightweight-verification constraint.

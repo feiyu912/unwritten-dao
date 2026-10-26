@@ -34,6 +34,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Agent tiering | 6 major roles use the LLM path; otherwise RivalryPolicy (subdue on sight) for majors, UtilityPolicy for background | verified |
 | Pluggable decision model | DecisionModelPolicy + scoring/value protocols + legal mask + JSON decision records; no training | verified |
 | Decision dataset | `tools/collect_decisions.py --policy utility|rivalry|llm-mock|decision-model`: observation/goals/actions/choice/outcome/event ids; 30 samples / 2 days, all accepted | verified |
+| Canonical past | 7 seeded beliefs become queryable `BELIEF_ACQUIRED` events (ids 1..7); transfers can cite them | verified |
 | Server decision-model mode | `AGENT_PROVIDER=decision-model` returns a proposal and stores candidate/score/mask sample (migration 0004) | verified |
 | Goal evolution | revenge after a killer's act, defeat_rival completion, persistent goals across 200+ ticks; revenge drives a lethal attack when the target is visible | verified |
 | Knowledge boundary | fact/belief/private/memory separation, redaction, cited action explanations | verified |
@@ -58,8 +59,8 @@ excluded from the fast suite).
 
 - DecisionModelPolicy, knowledge boundaries, goal evolution, true multi-parent causality, and the
   UE5 pre-editor layout were added.
-- Strict causality is intentionally lower than the old fake number: outcome events 100% (3/3),
-  all important events 75% (3/4) because transfers have no tracked intent provenance.
+- Strict causality now uses canonical belief events and true parents: overall 100% (4/4), with no
+  fabricated previous-event links.
 - The golden checksum changed to `sha256:2d7c576b…`; the UE layout was regenerated.
 - Long benchmarks (100k events, 20 years) were not rerun under this round's lightweight constraint;
   their PASS values predate the state-schema change.
