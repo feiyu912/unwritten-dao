@@ -25,6 +25,16 @@ class UtilityPolicy:
     """Goal-driven, deterministic policy. No randomness, stable ordering."""
 
     def decide(self, observation: NpcObservation) -> ActionProposal:
+        revenge = _revenge_target(observation)
+        if revenge is not None and observation.self.health > 0.25:
+            return _proposal(
+                observation,
+                "attack",
+                {"target_id": revenge[1], "intent": "kill"},
+                "a sworn enemy is standing here",
+                revenge[0],
+                confidence=0.85,
+            )
         goal = _breakthrough_goal(observation.goals)
         if goal is not None:
             special = self._breakthrough_path(observation, goal)
@@ -175,6 +185,18 @@ def _cultivate(observation: NpcObservation) -> ActionProposal:
         goal.goal_id if goal else None,
         confidence=0.5,
     )
+
+
+def _revenge_target(observation: NpcObservation) -> tuple[str, str] | None:
+    visible = {npc.npc_id for npc in observation.visible_npcs if npc.alive}
+    revenge = [
+        goal for goal in observation.goals if goal.kind == "revenge" and goal.status == "active"
+    ]
+    for goal in sorted(revenge, key=lambda item: (-item.priority, item.goal_id)):
+        target = goal.params.get("target_id") or goal.params.get("target")
+        if isinstance(target, str) and target in visible:
+            return goal.goal_id, target
+    return None
 
 
 def _breakthrough_goal(goals: list[ObservedGoal]) -> ObservedGoal | None:

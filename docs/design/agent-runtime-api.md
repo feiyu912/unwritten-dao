@@ -74,7 +74,8 @@ decide_and_apply(state, npc_id, policy, *, fallback=None, memories=(), recent_ev
 
 ## UtilityPolicy behavior (R1)
 
-Deterministic, no randomness. Stable key order. For an NPC whose active goal is
+Deterministic, no randomness. Stable key order. If an active `revenge` goal's target is visible
+and the NPC is healthy, propose a lethal attack first. For an NPC whose active goal is
 `breakthrough` (the protagonist path):
 
 1. owns `foundation_pill` and is at realm stage cap → `attempt_breakthrough` with the pill;

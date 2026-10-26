@@ -239,3 +239,53 @@ def test_impossible_plans_are_safely_handled_every_time() -> None:
         assert result is not None
         assert result.accepted is True
         assert validate_state(state) == []
+
+
+def test_revenge_goal_attacks_visible_target() -> None:
+    from agent_runtime.validator import proposal_to_command
+    from world_core.models import Goal
+    from world_core.worldgen import npc_id
+
+    from world_core import LOC_XUANYUE_SECT
+
+    state = create_world(42)
+    avenger = state.npcs[npc_id("a_he")]
+    avenger.goals.append(
+        Goal(
+            goal_id="goal_revenge_test",
+            kind="revenge",
+            priority=0.9,
+            params={"target_id": PROTAGONIST_ID},
+            created_tick=0,
+        )
+    )
+    state.npcs[PROTAGONIST_ID].location_id = LOC_XUANYUE_SECT
+    observation = build_observation(state, avenger.npc_id)
+    proposal = UtilityPolicy().decide(observation)
+    assert proposal.intent == "attack"
+    assert proposal.arguments == {"target_id": PROTAGONIST_ID, "intent": "kill"}
+
+    result = apply_command(state, proposal_to_command(state, proposal))
+    assert any(event.type == "COMBAT_RESOLVED" for event in result.events)
+    assert validate_state(state) == []
+
+
+def test_revenge_goal_does_not_attack_when_target_is_absent() -> None:
+    from world_core.models import Goal
+    from world_core.worldgen import npc_id
+
+    state = create_world(42)
+    avenger = state.npcs[npc_id("a_he")]
+    avenger.location_id = "location_blackwood_forest"
+    avenger.goals.append(
+        Goal(
+            goal_id="goal_revenge_absent",
+            kind="revenge",
+            priority=0.9,
+            params={"target_id": PROTAGONIST_ID},
+            created_tick=0,
+        )
+    )
+    observation = build_observation(state, avenger.npc_id)
+    proposal = UtilityPolicy().decide(observation)
+    assert proposal.intent != "attack"

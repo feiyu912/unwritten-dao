@@ -35,7 +35,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Pluggable decision model | DecisionModelPolicy + scoring/value protocols + legal mask + JSON decision records; no training | verified |
 | Decision dataset | `tools/collect_decisions.py --policy utility|rivalry|llm-mock|decision-model`: observation/goals/actions/choice/outcome/event ids; 30 samples / 2 days, all accepted | verified |
 | Server decision-model mode | `AGENT_PROVIDER=decision-model` returns a proposal and stores candidate/score/mask sample (migration 0004) | verified |
-| Goal evolution | revenge after a killer's act, defeat_rival completion, persistent goals across 200+ ticks | verified |
+| Goal evolution | revenge after a killer's act, defeat_rival completion, persistent goals across 200+ ticks; revenge drives a lethal attack when the target is visible | verified |
 | Knowledge boundary | fact/belief/private/memory separation, redaction, cited action explanations | verified |
 | UE5 pre-editor kit | deterministic layout JSON (8 locations, 30 NPCs), scene plan, licenses, editor checklist; no UE validation | verified |
 | LLM proposal pipeline | strict JSON parsing, identity binding, one repair, audit rows, replay mode; simulator rejection triggers one Utility fallback | verified with mock; real-model legality rate unmeasured |
