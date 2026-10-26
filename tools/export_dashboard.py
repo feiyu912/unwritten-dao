@@ -78,8 +78,7 @@ def _svg(state) -> str:
             drawn.add(pair)
             x2, y2 = POSITIONS[adjacent]
             parts.append(
-                f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" '
-                'stroke="#33465a" stroke-width="2"/>'
+                f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#33465a" stroke-width="2"/>'
             )
     by_location: dict[str, list] = {}
     for npc in state.npcs.values():
@@ -92,16 +91,13 @@ def _svg(state) -> str:
             else KIND_COLORS.get(location.kind, "#3fb27f")
         )
         parts.append(
-            f'<circle cx="{x}" cy="{y}" r="22" fill="{color}" opacity="0.18" '
-            f'stroke="{color}"/>'
+            f'<circle cx="{x}" cy="{y}" r="22" fill="{color}" opacity="0.18" stroke="{color}"/>'
         )
         parts.append(
             f'<text x="{x}" y="{y + 44}" fill="#9fb3c8" font-size="13" '
             f'text-anchor="middle">{_esc(location.name)}</text>'
         )
-        members_here = sorted(
-            by_location.get(location.location_id, []), key=lambda n: n.npc_id
-        )
+        members_here = sorted(by_location.get(location.location_id, []), key=lambda n: n.npc_id)
         for index, npc in enumerate(members_here):
             angle = (index / max(1, len(members_here))) * 6.283
             nx = x + 13 * math.cos(angle)
@@ -111,7 +107,7 @@ def _svg(state) -> str:
             parts.append(
                 f'<circle cx="{nx:.1f}" cy="{ny:.1f}" r="4.5" fill="{dot}" '
                 f'opacity="{opacity}"><title>{_esc(npc.name)} · 境界 {npc.realm}'
-                f'{" · 已故" if not npc.alive else ""}</title></circle>'
+                f"{' · 已故' if not npc.alive else ''}</title></circle>"
             )
     parts.append("</svg>")
     return "".join(parts)
@@ -219,9 +215,9 @@ ol {{ padding-left: 22px; }} li {{ margin: 5px 0; }}
 <h2>主要人物</h2><div class="card">{_characters(state)}</div>
 <h2>重要事件与因果父事件</h2><div class="card">{_timeline(state, events)}</div>
 <h2>主角人生节点</h2><div class="card"><ol>
-{''.join(f'<li>{_esc(line)}</li>' for line in life) or '<li>无</li>'}
+{"".join(f"<li>{_esc(line)}</li>" for line in life) or "<li>无</li>"}
 </ol></div>
-<h2>校验</h2><p class="{'warn' if violations else 'sub'}">
+<h2>校验</h2><p class="{"warn" if violations else "sub"}">
 violations: {_esc(violations) if violations else "none"}</p>
 </main></body></html>"""
 

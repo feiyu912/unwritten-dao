@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from agent_runtime import InMemoryEpisodeStore, MemoryEpisode
 from tools.character_history import find_npc, simulate
 from world_server.memory_store import memory_candidates
+
+from agent_runtime import InMemoryEpisodeStore, MemoryEpisode
 
 QUERIES = [
     ("残破洞府图", "残破洞府图"),
