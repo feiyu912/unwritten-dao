@@ -37,3 +37,6 @@ dashboard:
 
 replay-decisions:
 	uv run python -m tools.replay_decisions --days 30
+
+bench-memory:
+	uv run python -m tools.bench_memory --events 100000 --queries 1000 --top-k 5 --rebuild-index

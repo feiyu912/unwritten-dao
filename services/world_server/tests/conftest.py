@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pathlib
+import sys
 from collections.abc import Iterator
 
 import pytest
@@ -11,6 +12,9 @@ from sqlalchemy.orm import Session
 from world_server.db import get_engine, get_session_factory
 
 SERVER_DIR = pathlib.Path(__file__).resolve().parents[1]
+ROOT = SERVER_DIR.parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 pytestmark = pytest.mark.integration
 

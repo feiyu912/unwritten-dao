@@ -59,8 +59,7 @@ def find_story_threads(
             4,
         )
         headline = (
-            f"{chain[0].type} → … → {chain[-1].type} "
-            f"(E{chain[0].event_id}…E{chain[-1].event_id})"
+            f"{chain[0].type} → … → {chain[-1].type} (E{chain[0].event_id}…E{chain[-1].event_id})"
         )
         root = chain[0].event_id
         existing = threads.get(root)

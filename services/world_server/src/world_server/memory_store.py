@@ -114,9 +114,7 @@ def retrieve_memories(
     recent_event_ids: list[int] | None = None,
     top_k: int | None = None,
 ) -> list[dict[str, Any]]:
-    query = " ".join(
-        goal.kind for goal in state.npcs[npc_id].goals if goal.status == "active"
-    )
+    query = " ".join(goal.kind for goal in state.npcs[npc_id].goals if goal.status == "active")
     query_embedding: list[float] | None = None
     provider = build_embedding_provider()
     if provider is not None:

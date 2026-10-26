@@ -30,6 +30,7 @@ uv run python -m tools.character_history --npc 沈砚 --years 20  # one life tim
 uv run python -m tools.export_dashboard --years 20  # self-contained HTML history dashboard
 uv run python -m tools.replay_decisions --days 30    # record model proposals, replay without a model
 uv run python -m tools.seed_history --years 20 --reset  # persist a 20-year agent history (local DB)
+uv run python -m tools.bench_memory --events 10000 --queries 200 --top-k 5 --rebuild-index
 uv run python -m tools.play                        # playable headless MVP
 uv run uvicorn world_server.app:app --port 8000    # HTTP/WS server (needs PostgreSQL)
 ```
