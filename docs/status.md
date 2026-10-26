@@ -16,7 +16,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | 100k-event invariants | `tests/e2e/test_event_stress.py` (slow): **1.18 s**, 84.6k events/s, invariants hold | verified |
 | Rule coverage | faction economy, natural death clearing actions, realm/opportunity expiry directly tested | verified |
 | Goal persistence | `report_history` counts goal statuses; resolved-goal persistence **1/1 = 100%** (target ≥80%) | verified (single resolved goal) |
-| Snapshot / save-load | core round-trip + server time-travel test; replay checksum identical | verified |
+| Snapshot / save-load | core round-trip + server time-travel; **year-10 save → year-20 run matches uninterrupted checksum and event id** | verified |
 | 20-year agent history | `tools/narrative_report.py`: **1.9 s**, protagonist reaches realm 2, causal chains + faction outcomes | verified |
 | Character life query | `tools/character_history.py --npc 沈砚 --years 20`: full event-ID timeline | verified |
 | History dashboard | self-contained HTML (region map, NPC/faction state, causal timeline); rendered and checked in Chrome | verified |
