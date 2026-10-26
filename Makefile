@@ -34,3 +34,6 @@ history:
 
 dashboard:
 	uv run python -m tools.export_dashboard --years 20
+
+replay-decisions:
+	uv run python -m tools.replay_decisions --days 30
