@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
@@ -46,7 +47,7 @@ class WorldStateRow(Base):
     state_version: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     last_event_id: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     checksum: Mapped[str] = mapped_column(Text, nullable=False)
-    state: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    state: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), default=_utcnow
     )
@@ -67,7 +68,7 @@ class WorldEventRow(Base):
     rng_seed: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     command_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     state_version_after: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    payload: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), default=_utcnow
     )
@@ -100,7 +101,7 @@ class CommandLogRow(Base):
     command_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     accepted: Mapped[bool] = mapped_column(nullable=False, default=True)
     state_version_after: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    response: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    response: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), default=_utcnow
     )
@@ -127,7 +128,7 @@ class WorldSnapshotRow(Base):
     sim_version: Mapped[str] = mapped_column(Text, nullable=False)
     ruleset_version: Mapped[str] = mapped_column(Text, nullable=False)
     checksum: Mapped[str] = mapped_column(Text, nullable=False)
-    state: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    state: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), default=_utcnow
     )
@@ -193,7 +194,7 @@ class AgentDecisionRow(Base):
     accepted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     latency_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    proposal: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    proposal: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), default=_utcnow
     )

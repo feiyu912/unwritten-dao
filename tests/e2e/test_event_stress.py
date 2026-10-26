@@ -25,9 +25,7 @@ def test_hundred_thousand_events_keep_invariants() -> None:
     started = time.perf_counter()
     for index in range(TARGET_EVENTS):
         target = b if index % 2 == 0 else a
-        command = make_command(
-            state, PLAYER_ID, "move", {"to_location_id": target}, source="test"
-        )
+        command = make_command(state, PLAYER_ID, "move", {"to_location_id": target}, source="test")
         result = apply_command(state, command)
         assert len(result.events) == 1
     elapsed = time.perf_counter() - started

@@ -134,6 +134,7 @@ def handle_attempt_breakthrough(
 
     parent_ids: list[int] = []
     if pill_item is not None:
+        assert pill_id is not None
         actor.inventory.remove(pill_id)
         pill_item.owner_id = None
         pill_item.location_id = None
@@ -256,17 +257,21 @@ def handle_transfer_item(
     source_inventory.remove(item_id)
     item.owner_id = None
     item.location_id = None
+    target_ids: list[str] = []
     if to_kind == "npc":
+        assert destination is not None
         destination.inventory.append(item_id)
         item.owner_id = destination.npc_id
+        target_ids.append(destination.npc_id)
     else:
+        assert destination_location is not None
         destination_location.stash.append(item_id)
         item.location_id = destination_location.location_id
 
     emit(
         "ITEM_TRANSFERRED",
         actor_ids=[actor.npc_id],
-        target_ids=[destination.npc_id] if to_kind == "npc" else [],
+        target_ids=target_ids,
         location_id=actor.location_id,
         rng_seed=seed_for(state, "transfer", actor.npc_id, item_id, to_id),
         payload={

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from sqlalchemy import delete, select
@@ -10,6 +11,7 @@ from sqlalchemy.orm import Session
 from world_core.commands import CommandResult
 from world_core.events import WorldEvent
 
+from agent_runtime import ActionProposal, DecisionRecord
 from world_core import CommandRejected, WorldCommand, WorldState, state_checksum
 from world_core import apply_command as core_apply
 from world_core import create_world as core_create_world
@@ -296,7 +298,7 @@ def _event_row(world_id: uuid.UUID, event: WorldEvent) -> WorldEventRow:
     )
 
 
-def _events_from_rows(session: Session, rows: list[WorldEventRow]) -> list[WorldEvent]:
+def _events_from_rows(session: Session, rows: Sequence[WorldEventRow]) -> list[WorldEvent]:
     if not rows:
         return []
     event_ids = [row.event_id for row in rows]
@@ -361,15 +363,13 @@ def save_decisions(
     session: Session,
     *,
     world_id: str,
-    records: list[object],
-    proposal: object | None,
+    records: list[DecisionRecord],
+    proposal: ActionProposal | None,
 ) -> None:
     """Persist decision audit records; the proposal is stored on accepted rows."""
-    proposal_payload = None
-    if proposal is not None and hasattr(proposal, "model_dump"):
-        proposal_payload = proposal.model_dump(mode="json")  # type: ignore[union-attr]
+    proposal_payload = proposal.model_dump(mode="json") if proposal is not None else None
     for record in records:
-        payload = proposal_payload if getattr(record, "accepted", False) else None
+        payload = proposal_payload if record.accepted else None
         session.add(
             AgentDecisionRow(
                 world_id=uuid.UUID(world_id),

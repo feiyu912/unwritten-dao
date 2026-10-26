@@ -11,8 +11,8 @@ from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-OBSERVATION_SCHEMA_VERSION = "npc-observation.v1"
-PROPOSAL_SCHEMA_VERSION = "action-proposal.v1"
+OBSERVATION_SCHEMA_VERSION: Literal["npc-observation.v1"] = "npc-observation.v1"
+PROPOSAL_SCHEMA_VERSION: Literal["action-proposal.v1"] = "action-proposal.v1"
 
 ProposalIntent = Literal[
     "wait",

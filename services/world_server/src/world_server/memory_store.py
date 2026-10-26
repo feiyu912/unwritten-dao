@@ -60,13 +60,14 @@ def record_event_memories(
     if not events:
         return
     event_ids = [event.event_id for event in events]
-    existing = set(
-        session.execute(
+    existing: set[tuple[uuid.UUID, int]] = {
+        (row[0], row[1])
+        for row in session.execute(
             select(MemoryEpisodeRow.npc_id, MemoryEpisodeRow.source_event_id).where(
                 MemoryEpisodeRow.source_event_id.in_(event_ids)
             )
         ).all()
-    )
+    }
     for event in events:
         for npc_id, summary, importance, valence in memory_candidates(state, event):
             key = (uuid.UUID(npc_id), event.event_id)

@@ -316,9 +316,9 @@ def validate_state(state: WorldState) -> list[str]:
             problems.append(f"{key} has unknown entrance")
         if realm.interior_location_id not in state.locations:
             problems.append(f"{key} has unknown interior")
-        for npc in realm.discovered_by:
-            if npc not in state.npcs:
-                problems.append(f"{key} discovered by unknown NPC {npc}")
+        for discoverer_id in realm.discovered_by:
+            if discoverer_id not in state.npcs:
+                problems.append(f"{key} discovered by unknown NPC {discoverer_id}")
 
     for key, opportunity in state.opportunities.items():
         if key != opportunity.opportunity_id:
