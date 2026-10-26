@@ -373,3 +373,37 @@ def test_api_responses_validate_contracts(client: TestClient) -> None:
     decision = client.post(f"/v1/agents/{PROTAGONIST_ID}/decision")
     assert decision.status_code == 200
     _contract("action-proposal.v1.schema.json").validate(decision.json())
+
+
+def test_event_pagination_and_websocket_resume(client: TestClient) -> None:
+    def advance(key: str) -> dict[str, Any]:
+        snapshot = client.get("/v1/world/snapshot").json()
+        command = {
+            "schema_version": "world-command.v1",
+            "command_id": f"44444444-4444-4444-8444-{key:0>12}",
+            "idempotency_key": f"api:resume:{key}",
+            "world_id": snapshot["world_id"],
+            "actor_id": None,
+            "issued_tick": snapshot["tick"],
+            "expected_state_version": snapshot["state_version"],
+            "type": "advance_time",
+            "arguments": {"ticks": 1},
+            "source": "system",
+        }
+        response = client.post("/v1/commands", json=command)
+        assert response.status_code == 200
+        return response.json()["events"][0]
+
+    first = advance("1")
+    second = advance("2")
+
+    page = client.get(
+        "/v1/world/events", params={"after": first["event_id"], "limit": 1}
+    ).json()["events"]
+    assert [event["event_id"] for event in page] == [second["event_id"]]
+
+    with client.websocket_connect(
+        f"/v1/events/stream?after={first['event_id']}"
+    ) as websocket:
+        resumed = websocket.receive_json()
+    assert resumed["event_id"] == second["event_id"]

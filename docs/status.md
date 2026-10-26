@@ -21,7 +21,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Idempotency & concurrency | duplicate key returns stored result; stale version → 409; command_id reuse → 409; two-session replay covered | verified |
 | Migration round trip | `alembic downgrade base` then `upgrade head` succeeds; same step runs in CI | verified |
 | Event log + causal query | `event_edge` persisted; `/v1/debug/causality/{id}` BFS | verified |
-| WebSocket stream | connected client receives a committed `NPC_MOVED` frame | verified |
+| WebSocket stream | live frame delivery plus resume from an `after` cursor; event pagination matches | verified |
 | API contract conformance | every OpenAPI operation implemented; live snapshot/event/observation/decision responses validate JSON Schemas | verified |
 | Agent tiering | 6 major roles use the LLM path; others stay on UtilityPolicy | verified |
 | LLM proposal pipeline | strict JSON parsing, identity binding, one repair, audit rows, replay mode; simulator rejection triggers one Utility fallback | verified with mock |
@@ -30,6 +30,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Dialogue | mock/OpenAI-compatible modes; deterministic fallback; no hidden facts | verified with mock |
 | Playable headless demo | `uv run python -m tools.play`; scripted smoke test traverses map → realm → pill | verified |
 | Cross-platform determinism | golden 20-year checksum asserted on both macOS ARM64 and Ubuntu x86_64 in CI | verified |
+| Cross-process determinism | same benchmark checksum under `PYTHONHASHSEED=0` and `1` | verified |
 | CI | macOS ARM64, Ubuntu x86_64, PostgreSQL integration all green | verified |
 | Real-process HTTP | uvicorn + httpx: snapshot (30 NPCs), observation (3 memories), decision, dialogue fallback, idempotent 200, stale 409 | verified |
 | Static gates | `ruff check .` clean; `mypy` clean on 32 source files | verified |
