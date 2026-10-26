@@ -14,6 +14,8 @@ import math
 import pathlib
 import sys
 
+from world_server.db import get_engine, get_session_factory
+from world_server.repository import NotFound, list_events, load_state
 from world_server.summaries import summarize_event
 
 from agent_runtime import find_story_threads
@@ -243,20 +245,47 @@ violations: {_esc(violations) if violations else "none"}</p>
 </main></body></html>"""
 
 
+def dashboard_from_db(session) -> tuple[str, int, bool]:
+    state = load_state(session)
+    events = []
+    after = 0
+    while True:
+        page = list_events(session, after=after, limit=1000)
+        if not page:
+            break
+        events.extend(page)
+        after = page[-1].event_id
+    years = max(1, state.tick // 365)
+    html_text = build_dashboard(state, events, years=years, seed=state.world_seed)
+    return html_text, len(events), not validate_state(state)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Export a history dashboard.")
     parser.add_argument("--years", type=int, default=20)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--out", type=pathlib.Path, default=pathlib.Path("reports/dashboard.html"))
+    parser.add_argument("--from-db", action="store_true", help="read the persisted server world")
     args = parser.parse_args(argv)
 
-    state, events = simulate(years=args.years, seed=args.seed)
+    if args.from_db:
+        session = get_session_factory(get_engine())()
+        try:
+            page, event_count, valid = dashboard_from_db(session)
+        except NotFound:
+            print("no world in the database; run tools.seed_history or start the server first")
+            return 2
+        finally:
+            session.close()
+    else:
+        state, events = simulate(years=args.years, seed=args.seed)
+        page = build_dashboard(state, events, years=args.years, seed=args.seed)
+        event_count = len(events)
+        valid = not validate_state(state)
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(
-        build_dashboard(state, events, years=args.years, seed=args.seed), encoding="utf-8"
-    )
-    print(f"wrote {args.out} ({args.out.stat().st_size} bytes)")
-    return 0 if not validate_state(state) else 1
+    args.out.write_text(page, encoding="utf-8")
+    print(f"wrote {args.out} ({args.out.stat().st_size} bytes, events={event_count})")
+    return 0 if valid else 1
 
 
 if __name__ == "__main__":

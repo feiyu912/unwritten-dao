@@ -40,3 +40,6 @@ replay-decisions:
 
 bench-memory:
 	uv run python -m tools.bench_memory --events 100000 --queries 1000 --top-k 5 --rebuild-index
+
+dashboard-db:
+	uv run python -m tools.export_dashboard --from-db --out reports/dashboard_db.html

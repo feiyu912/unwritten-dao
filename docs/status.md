@@ -21,6 +21,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | 20-year agent history | `tools/narrative_report.py`: **1.9 s**, protagonist reaches realm 2, causal chains + faction outcomes | verified |
 | Character life query | `tools/character_history.py --npc 沈砚 --years 20`: full event-ID timeline | verified |
 | History dashboard | self-contained HTML (region map, NPC/faction state, causal timeline, story threads); rendered and checked in Chrome | verified |
+| DB-backed dashboard | reads 21,897 persisted events from PostgreSQL and renders the same world | verified |
 | Story threads | narrative director backtracks real causal parents into ranked multi-event threads; false invention impossible by construction | verified |
 | 20-year persisted history | `tools/seed_history.py`: agent-driven, **4.0 s**, 21,897 events, 7,042 memories, API reloads at tick 7300 | verified |
 | Database size target | seeded 20-year agent history: **19.4 MB** total (< 1 GB) | verified |
