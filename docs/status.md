@@ -33,6 +33,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | API contract conformance | every OpenAPI operation implemented; live snapshot/event/observation/decision responses validate JSON Schemas | verified |
 | Agent tiering | 6 major roles use the LLM path; otherwise RivalryPolicy (subdue on sight) for majors, UtilityPolicy for background | verified |
 | LLM proposal pipeline | strict JSON parsing, identity binding, one repair, audit rows, replay mode; simulator rejection triggers one Utility fallback | verified with mock; real-model legality rate unmeasured |
+| Provider HTTP adapters | OpenAI-compatible decision and embedding endpoints exercised over real localhost HTTP with a stub server | verified (no real model) |
 | Episodic memory | events → `memory_episode` in the command transaction; top-5 retrieval into prompt | verified |
 | Memory recall gate | labeled Recall@5 = 10/10 (toy) and 8/8 on a real simulated life | verified (small sets) |
 | Dialogue | mock/OpenAI-compatible modes; deterministic fallback; no hidden facts | verified with mock |
