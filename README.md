@@ -37,6 +37,12 @@ uv run alembic -c services/world_server/alembic.ini upgrade head
 uv run pytest -m integration
 ```
 
+## Security (MVP)
+
+This is a single-player development build. PostgreSQL binds to `127.0.0.1` only and the API
+has no authentication — do not expose either port to an untrusted network. Keep `.env` and
+provider keys out of git; the server logs no credentials.
+
 ## Repository layout
 
 ```text
