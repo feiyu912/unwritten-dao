@@ -123,9 +123,7 @@ def _final_violations(core: Any, state: Any, target_tick: int, events: int) -> l
             continue
         previous = owners.get(item_id)
         if previous is not None and previous != item.owner_id:
-            violations.append(
-                f"unique item {item_id} owned by both {previous} and {item.owner_id}"
-            )
+            violations.append(f"unique item {item_id} owned by both {previous} and {item.owner_id}")
         owners[item_id] = item.owner_id
 
     last_event_id = getattr(state, "last_event_id", events)
@@ -143,9 +141,7 @@ def run_benchmark(core: Any, args: argparse.Namespace) -> int:
     state = core.create_world(seed=args.seed)
     npc_count = len(state.npcs)
     if npc_count != args.npcs:
-        raise ValueError(
-            f"seed {args.seed} generated {npc_count} NPCs but --npcs is {args.npcs}"
-        )
+        raise ValueError(f"seed {args.seed} generated {npc_count} NPCs but --npcs is {args.npcs}")
 
     print(
         f"world={state.world_id} seed={state.world_seed} npcs={npc_count} "

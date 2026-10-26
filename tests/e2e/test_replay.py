@@ -86,8 +86,7 @@ def test_one_hundred_replay_runs_are_identical() -> None:
             f"run {run}/{RUNS}: checksum {checksum} != {expected_checksum}"
         )
         assert event_count == expected_events, (
-            f"run {run}/{RUNS}: {event_count} events != {expected_events} "
-            f"(checksum {checksum})"
+            f"run {run}/{RUNS}: {event_count} events != {expected_events} (checksum {checksum})"
         )
 
     assert expected_checksum.startswith("sha256:")

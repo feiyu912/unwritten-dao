@@ -214,3 +214,65 @@ def test_replay_mode_returns_recorded_proposal(client: TestClient, monkeypatch: 
     missing = _decision(client, PROTAGONIST_ID)
     assert missing.status_code == 409
     assert missing.json()["detail"]["code"] == "replay_fixture_missing"
+
+
+def test_observation_and_prompt_include_relevant_memories(
+    client: TestClient, session: Any, monkeypatch: Any
+) -> None:
+    from world_server.repository import apply_command, load_state
+
+    from world_core import (
+        ITEM_MAP_FRAGMENT as MAP,
+    )
+    from world_core import (
+        LOC_BLACKWOOD_FOREST as FOREST,
+    )
+    from world_core import (
+        LOC_MISTY_VALLEY as VALLEY,
+    )
+    from world_core import (
+        LOC_RUINED_TEMPLE as TEMPLE,
+    )
+    from world_core import (
+        make_command,
+    )
+
+    state = load_state(session)
+    actor = state.npcs[PROTAGONIST_ID]
+    steps: list[tuple[str, dict[str, Any]]] = [
+        ("move", {"to_location_id": FOREST}),
+        ("move", {"to_location_id": TEMPLE}),
+        (
+            "transfer_item",
+            {
+                "item_id": MAP,
+                "from": {"kind": "location", "id": TEMPLE},
+                "to": {"kind": "npc", "id": actor.npc_id},
+            },
+        ),
+        ("move", {"to_location_id": VALLEY}),
+        ("investigate", {"target_location_id": VALLEY, "focus": "secret_realm"}),
+    ]
+    for intent, arguments in steps:
+        current = load_state(session)
+        apply_command(
+            session,
+            make_command(current, actor.npc_id, intent, arguments, source="test"),  # type: ignore[arg-type]
+        )
+
+    observation = client.get(f"/v1/npcs/{PROTAGONIST_ID}/observation").json()
+    assert observation["memories"]
+    assert any("secret realm" in memory["summary"] for memory in observation["memories"])
+
+    monkeypatch.setenv("AGENT_PROVIDER", "llm-mock")
+    decision = client.post(f"/v1/agents/{PROTAGONIST_ID}/decision")
+    assert decision.status_code == 200
+
+    from sqlalchemy import select
+    from world_server.models import AgentDecisionRow
+
+    row = session.execute(
+        select(AgentDecisionRow).order_by(AgentDecisionRow.id.desc()).limit(1)
+    ).scalar_one()
+    assert "RELEVANT_MEMORIES" in row.user_prompt
+    assert "secret realm" in row.user_prompt

@@ -22,10 +22,7 @@ from typing import Any
 from jsonschema import Draft202012Validator, FormatChecker
 
 SCHEMA_PATH = (
-    Path(__file__).resolve().parents[1]
-    / "docs"
-    / "contracts"
-    / "world-command.v1.schema.json"
+    Path(__file__).resolve().parents[1] / "docs" / "contracts" / "world-command.v1.schema.json"
 )
 
 

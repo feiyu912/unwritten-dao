@@ -39,6 +39,8 @@ SQLite; JSONB semantics and `CREATE EXTENSION vector` are part of the schema con
 
 ## R1 limitations
 
-- `/v1/dialogue` is a deterministic placeholder; no LLM is attached yet.
-- `memory_episode` exists (pgvector column included) but nothing writes to it until R2.
+- `/v1/dialogue` is still a deterministic placeholder; the planning path is LLM-backed.
+- Committed events write `memory_episode` rows and observations retrieve the top-5 ranked
+  episodes. Embeddings remain null; retrieval is deterministic lexical scoring until an
+  embedding provider is configured.
 - Single-world, single-process; no auth.

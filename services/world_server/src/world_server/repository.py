@@ -14,6 +14,7 @@ from world_core import CommandRejected, WorldCommand, WorldState, state_checksum
 from world_core import apply_command as core_apply
 from world_core import create_world as core_create_world
 from world_core import snapshot as core_snapshot
+from world_server.memory_store import record_event_memories
 from world_server.models import (
     AgentDecisionRow,
     CommandLogRow,
@@ -119,6 +120,7 @@ def apply_command(session: Session, command: WorldCommand) -> CommandResult:
                     relation="caused_by",
                 )
             )
+    record_event_memories(session, row.world_id, state, result.events)
     row.tick = state.tick
     row.state_version = result.state_version
     row.last_event_id = state.last_event_id

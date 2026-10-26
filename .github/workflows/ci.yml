@@ -48,7 +48,7 @@ jobs:
         run: uv run ruff check .
 
       - name: Unit tests
-        run: uv run pytest -m "not integration and not slow" -q
+        run: uv run pytest packages services tests clients/unreal/tools -m "not integration and not slow" -q
 
       - name: Record result label
         if: always()

@@ -31,6 +31,7 @@ from world_core import snapshot as core_snapshot
 from world_server.agent_policy import policy_for
 from world_server.config import SETTINGS
 from world_server.db import get_engine, get_session_factory, session_dependency
+from world_server.memory_store import retrieve_memories
 from world_server.repository import (
     IdempotencyConflict,
     NotFound,
@@ -45,6 +46,7 @@ from world_server.repository import (
     save_decisions,
     save_snapshot,
 )
+from world_server.summaries import summarize_event
 
 SessionDep = Annotated[Session, Depends(session_dependency)]
 
@@ -127,7 +129,7 @@ def create_app() -> FastAPI:
         state = load_state(session)
         if str(npc_id) not in state.npcs:
             raise NotFound(f"unknown npc {npc_id}")
-        return build_observation(state, str(npc_id), recent_events=_recent_rows(session, state))
+        return _observation(session, state, str(npc_id))
 
     @app.post("/v1/commands")
     def submit_command(session: SessionDep, command: dict[str, Any]) -> dict[str, Any]:
@@ -157,9 +159,7 @@ def create_app() -> FastAPI:
                 )
             return rows[-1].proposal
 
-        observation = build_observation(
-            state, str(npc_id), recent_events=_recent_rows(session, state)
-        )
+        observation = _observation(session, state, str(npc_id))
         try:
             selection = policy_for(npc)
         except RuntimeError as exc:
@@ -247,17 +247,21 @@ def create_app() -> FastAPI:
     return app
 
 
-def _recent_rows(session: Session, state: Any) -> list[dict[str, Any]]:
+def _observation(session: Session, state: Any, npc_id: str) -> NpcObservation:
     recent = list_events(session, after=max(0, state.last_event_id - 50))
-    return [
+    recent_rows = [
         {
             "event_id": event.event_id,
             "tick": event.tick,
             "type": event.type,
-            "summary": _summarize(event.type, event.payload),
+            "summary": summarize_event(event.type, event.payload, state),
         }
         for event in recent
     ]
+    memories = retrieve_memories(
+        session, state, npc_id, recent_event_ids=[event.event_id for event in recent]
+    )
+    return build_observation(state, npc_id, memories=memories, recent_events=recent_rows)
 
 
 def _utility_record(
@@ -282,20 +286,6 @@ def _utility_record(
         error=error,
         latency_ms=round((time.perf_counter() - started) * 1000, 3),
     )
-
-
-def _summarize(event_type: str, payload: dict[str, Any]) -> str:
-    if event_type == "NPC_MOVED":
-        return f"moved to {payload.get('to_location_id')}"
-    if event_type == "ITEM_TRANSFERRED":
-        return f"item {payload.get('item_id')} changed hands"
-    if event_type == "BREAKTHROUGH_ATTEMPT":
-        return "attempted a realm breakthrough"
-    if event_type == "OPPORTUNITY_CLAIMED":
-        return f"claimed {payload.get('name')}"
-    if event_type == "NPC_DIED":
-        return f"died ({payload.get('cause')})"
-    return event_type.lower()
 
 
 __all__ = ["create_app"]

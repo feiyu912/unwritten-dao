@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import uuid
+
 import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -200,3 +202,67 @@ def test_command_id_reuse_under_new_key_conflicts(session: Session) -> None:
     conflicting.command_id = command.command_id
     with pytest.raises(IdempotencyConflict):
         apply_command(session, conflicting)
+
+
+def test_events_become_episodic_memories_without_duplicates(session: Session) -> None:
+    from world_server.memory_store import retrieve_memories
+    from world_server.models import MemoryEpisodeRow
+
+    state = bootstrap(session, seed=42)
+    actor = state.npcs[PROTAGONIST_ID]
+    steps: list[tuple[str, dict[str, object]]] = [
+        ("move", {"to_location_id": LOC_BLACKWOOD_FOREST}),
+        ("move", {"to_location_id": LOC_RUINED_TEMPLE}),
+        (
+            "transfer_item",
+            {
+                "item_id": ITEM_MAP_FRAGMENT,
+                "from": {"kind": "location", "id": LOC_RUINED_TEMPLE},
+                "to": {"kind": "npc", "id": actor.npc_id},
+            },
+        ),
+        ("move", {"to_location_id": LOC_MISTY_VALLEY}),
+        (
+            "investigate",
+            {"target_location_id": LOC_MISTY_VALLEY, "focus": "secret_realm"},
+        ),
+    ]
+    last_command = None
+    for intent, arguments in steps:
+        current = load_state(session)
+        last_command = make_command(
+            current,
+            actor.npc_id,
+            intent,
+            arguments,
+            source="test",  # type: ignore[arg-type]
+        )
+        apply_command(session, last_command)
+
+    rows = (
+        session.execute(
+            select(MemoryEpisodeRow).where(MemoryEpisodeRow.npc_id == uuid.UUID(actor.npc_id))
+        )
+        .scalars()
+        .all()
+    )
+    assert rows
+    discovery = [row for row in rows if "secret realm" in row.summary]
+    assert discovery and discovery[0].importance >= 0.9
+    assert any("残破洞府图" in row.summary for row in rows)
+
+    memory_count = len(rows)
+    assert last_command is not None
+    apply_command(session, last_command)  # idempotent replay
+    replayed = session.execute(select(func.count()).select_from(MemoryEpisodeRow)).scalar_one()
+    assert replayed == memory_count
+
+    current = load_state(session)
+    recalled = retrieve_memories(
+        session,
+        current,
+        actor.npc_id,
+        recent_event_ids=[event.event_id for event in list_events(session, limit=100)],
+    )
+    assert recalled
+    assert any("secret realm" in memory["summary"] for memory in recalled)
