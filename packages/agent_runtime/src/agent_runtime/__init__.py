@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+from agent_runtime.inference import (
+    MockInferenceProvider,
+    ReplayExhausted,
+    ReplayInferenceProvider,
+)
 from agent_runtime.models import (
     ActionProposal,
     ActiveActionView,
@@ -21,6 +26,7 @@ from agent_runtime.models import (
     VisibleOpportunity,
 )
 from agent_runtime.observation import build_observation
+from agent_runtime.policy import UtilityPolicy
 from agent_runtime.validator import ProposalRejected, decide_command, proposal_to_command
 
 __all__ = [
@@ -30,6 +36,7 @@ __all__ = [
     "InferenceProvider",
     "KnownLocation",
     "MemoryRecord",
+    "MockInferenceProvider",
     "NpcObservation",
     "ObservationSelf",
     "ObservedBelief",
@@ -39,6 +46,9 @@ __all__ = [
     "ProposalIntent",
     "ProposalRejected",
     "RecentEvent",
+    "ReplayExhausted",
+    "ReplayInferenceProvider",
+    "UtilityPolicy",
     "VisibleNpc",
     "VisibleOpportunity",
     "build_observation",
