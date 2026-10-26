@@ -32,6 +32,9 @@ from world_core import (
 )
 
 
+pytestmark = pytest.mark.integration
+
+
 def test_bootstrap_creates_valid_world_once(session: Session) -> None:
     first = bootstrap(session, seed=42)
     assert len(first.npcs) == 30
