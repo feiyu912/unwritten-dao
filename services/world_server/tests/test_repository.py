@@ -351,3 +351,39 @@ def test_two_sessions_share_state_version_and_idempotency(session: Session) -> N
     finally:
         first.close()
         second.close()
+
+
+def test_concurrent_commands_allow_exactly_one_writer(session: Session) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+
+    from world_server.db import get_engine, get_session_factory
+
+    state = bootstrap(session, seed=42)
+    first = make_command(
+        state, PROTAGONIST_ID, "wait", {"ticks": 1}, idempotency_key="race-a", source="test"
+    )
+    second = make_command(
+        state, PROTAGONIST_ID, "wait", {"ticks": 1}, idempotency_key="race-b", source="test"
+    )
+    factory = get_session_factory(get_engine())
+    barrier = Barrier(2)
+
+    def worker(command: WorldCommand) -> str:
+        db = factory()
+        try:
+            barrier.wait(timeout=10)
+            apply_command(db, command)
+            return "ok"
+        except StaleStateVersion:
+            return "stale"
+        finally:
+            db.close()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(worker, first), pool.submit(worker, second)]
+        outcomes = sorted(future.result() for future in futures)
+
+    assert outcomes == ["ok", "stale"]
+    final = load_state(session)
+    assert final.state_version == 1

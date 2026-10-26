@@ -23,7 +23,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | 20-year persisted history | `tools/bench_db.py`: **8.72 s**, 1707 events, 600 memories, state valid | verified |
 | Database size target | same run: **18.2 MB** total (< 1 GB) | verified (cultivation-only history) |
 | PostgreSQL persistence | 22 integration tests against real pgvector PostgreSQL 17 | verified |
-| Idempotency & concurrency | duplicate key returns stored result; stale version → 409; command_id reuse → 409; two-session replay covered | verified |
+| Idempotency & concurrency | two threads race one version: exactly one writer, one stale; duplicate key returns stored result; command_id reuse → 409 | verified |
 | Migration round trip | `alembic downgrade base` then `upgrade head` succeeds; same step runs in CI | verified |
 | Event log + causal query | `event_edge` persisted; `/v1/debug/causality/{id}` BFS | verified |
 | WebSocket stream | live frame delivery plus resume from an `after` cursor; event pagination matches | verified |
