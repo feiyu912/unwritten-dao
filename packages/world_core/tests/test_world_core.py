@@ -212,3 +212,54 @@ def test_without_map_the_realm_stays_undiscovered() -> None:
             ),
         )
     assert error.value.code == "realm_undiscovered"
+
+
+def test_combat_resolves_and_keeps_invariants() -> None:
+    from world_core import LOC_XUANYUE_SECT
+    from world_core.worldgen import npc_id
+
+    state = create_world(42)
+    attacker = state.npcs[PROTAGONIST_ID]
+    target = state.npcs[npc_id("pei_lie")]
+    target.location_id = LOC_XUANYUE_SECT
+    before = {attacker.npc_id: attacker.health, target.npc_id: target.health}
+
+    command = make_command(
+        state,
+        attacker.npc_id,
+        "attack",
+        {"target_id": target.npc_id, "intent": "rob"},
+        source="test",
+    )
+    result = apply_command(state, command)
+    combat = next(event for event in result.events if event.type == "COMBAT_RESOLVED")
+    assert 0.0 <= combat.payload["probability"] <= 1.0
+    assert 0.0 <= combat.payload["roll"] <= 1.0
+    assert validate_state(state) == []
+    changed = (
+        attacker.health != before[attacker.npc_id]
+        or target.health != before[target.npc_id]
+        or not target.alive
+        or not attacker.alive
+    )
+    assert changed
+
+
+def test_attack_requires_co_location() -> None:
+    from world_core.worldgen import npc_id
+
+    state = create_world(42)
+    attacker = state.npcs[PROTAGONIST_ID]
+    target = state.npcs[npc_id("pei_lie")]
+    with pytest.raises(CommandRejected) as error:
+        apply_command(
+            state,
+            make_command(
+                state,
+                attacker.npc_id,
+                "attack",
+                {"target_id": target.npc_id, "intent": "kill"},
+                source="test",
+            ),
+        )
+    assert error.value.code == "target_not_present"
