@@ -24,8 +24,8 @@ from world_core import (
     LOC_MISTY_VALLEY,
     LOC_RUINED_TEMPLE,
     PROTAGONIST_ID,
-    WorldCommand,
     CommandRejected,
+    WorldCommand,
     make_command,
     state_checksum,
 )
@@ -50,7 +50,6 @@ def test_apply_command_is_atomic_idempotent_and_versioned(session: Session) -> N
     command = make_command(
         state,
         PROTAGONIST_ID,
-    WorldCommand,
         "move",
         {"to_location_id": LOC_BLACKWOOD_FOREST},
         source="test",
@@ -75,7 +74,6 @@ def test_apply_command_is_atomic_idempotent_and_versioned(session: Session) -> N
     stale = make_command(
         fresh,
         PROTAGONIST_ID,
-    WorldCommand,
         "move",
         {"to_location_id": LOC_RUINED_TEMPLE},
         source="test",
@@ -90,7 +88,6 @@ def test_rejected_command_rolls_back_and_keeps_version(session: Session) -> None
     bad = make_command(
         state,
         PROTAGONIST_ID,
-    WorldCommand,
         "move",
         {"to_location_id": "location_nowhere"},
         source="test",
@@ -340,7 +337,6 @@ def test_two_sessions_share_state_version_and_idempotency(session: Session) -> N
         stale_command = make_command(
             current,
             PROTAGONIST_ID,
-    WorldCommand,
             "wait",
             {"ticks": 1},
             idempotency_key="race:3",
