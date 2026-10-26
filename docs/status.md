@@ -14,7 +14,8 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Model-proposal replay | record 29 LLM proposals → replay with `ProposalReplayPolicy` and no model; checksum identical | verified |
 | Stolen-map causal intervention | 400-day test + **20-year run**: baseline reaches realm 2 and claims the pill; intervention stays realm 1, never discovers the realm, checksums differ | verified |
 | 100k-event invariants | `tests/e2e/test_event_stress.py` (slow): **1.18 s**, 84.6k events/s, invariants hold | verified |
-| Rule coverage | faction economy, natural death clearing actions, realm/opportunity expiry directly tested | verified |
+| Rule coverage | faction economy, natural and combat deaths clear actions; realm/opportunity expiry directly tested | verified |
+| Impossible-plan safety | 20/20 synthetic impossible proposals rejected by the simulator and handled by one Utility fallback; invariants intact | verified (not real LLM) |
 | Goal persistence | `report_history` counts goal statuses; resolved-goal persistence **1/1 = 100%** (target ≥80%) | verified (single resolved goal) |
 | Snapshot / save-load | core round-trip + server time-travel; **year-10 save → year-20 run matches uninterrupted checksum and event id** | verified |
 | 20-year agent history | `tools/narrative_report.py`: **1.9 s**, protagonist reaches realm 2, causal chains + faction outcomes | verified |
@@ -29,7 +30,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | WebSocket stream | live frame delivery plus resume from an `after` cursor; event pagination matches | verified |
 | API contract conformance | every OpenAPI operation implemented; live snapshot/event/observation/decision responses validate JSON Schemas | verified |
 | Agent tiering | 6 major roles use the LLM path; otherwise RivalryPolicy (subdue on sight) for majors, UtilityPolicy for background | verified |
-| LLM proposal pipeline | strict JSON parsing, identity binding, one repair, audit rows, replay mode; simulator rejection triggers one Utility fallback | verified with mock |
+| LLM proposal pipeline | strict JSON parsing, identity binding, one repair, audit rows, replay mode; simulator rejection triggers one Utility fallback | verified with mock; real-model legality rate unmeasured |
 | Episodic memory | events → `memory_episode` in the command transaction; top-5 retrieval into prompt | verified |
 | Memory recall gate | labeled Recall@5 = 10/10 (toy) and 8/8 on a real simulated life | verified (small sets) |
 | Dialogue | mock/OpenAI-compatible modes; deterministic fallback; no hidden facts | verified with mock |

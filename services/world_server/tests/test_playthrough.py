@@ -50,12 +50,8 @@ def _submit(
 
 def test_player_completes_the_realm_arc_over_http(client: TestClient) -> None:
     all_events: list[dict[str, Any]] = []
-    for index, target in enumerate(
-        [LOC_XUANYUE_SECT, LOC_BLACKWOOD_FOREST, LOC_RUINED_TEMPLE]
-    ):
-        all_events += _submit(
-            client, "move", {"to_location_id": target}, key=f"play:move:{index}"
-        )
+    for index, target in enumerate([LOC_XUANYUE_SECT, LOC_BLACKWOOD_FOREST, LOC_RUINED_TEMPLE]):
+        all_events += _submit(client, "move", {"to_location_id": target}, key=f"play:move:{index}")
     all_events += _submit(
         client,
         "transfer_item",
@@ -66,18 +62,14 @@ def test_player_completes_the_realm_arc_over_http(client: TestClient) -> None:
         },
         key="play:take-map",
     )
-    all_events += _submit(
-        client, "move", {"to_location_id": LOC_MISTY_VALLEY}, key="play:valley"
-    )
+    all_events += _submit(client, "move", {"to_location_id": LOC_MISTY_VALLEY}, key="play:valley")
     all_events += _submit(
         client,
         "investigate",
         {"target_location_id": LOC_MISTY_VALLEY, "focus": "secret_realm"},
         key="play:investigate",
     )
-    all_events += _submit(
-        client, "move", {"to_location_id": LOC_ANCIENT_CAVE}, key="play:cave"
-    )
+    all_events += _submit(client, "move", {"to_location_id": LOC_ANCIENT_CAVE}, key="play:cave")
 
     claimed = False
     for attempt in range(10):
@@ -100,9 +92,7 @@ def test_player_completes_the_realm_arc_over_http(client: TestClient) -> None:
     snapshot = client.get("/v1/world/snapshot").json()
     player = snapshot["state"]["npcs"][PLAYER_ID]
     assert ITEM_FOUNDATION_PILL in player["inventory"]
-    assert snapshot["state"]["secret_realms"]["realm_ancient_cave"]["discovered_by"] == [
-        PLAYER_ID
-    ]
+    assert snapshot["state"]["secret_realms"]["realm_ancient_cave"]["discovered_by"] == [PLAYER_ID]
 
     discovery = next(event for event in all_events if event["type"] == "SECRET_REALM_DISCOVERED")
     chain = client.get(f"/v1/debug/causality/{discovery['event_id']}").json()

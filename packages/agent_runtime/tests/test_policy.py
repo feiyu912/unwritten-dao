@@ -187,3 +187,55 @@ def test_rivalry_policy_attacks_a_visible_goal_target() -> None:
     result = apply_command(state, proposal_to_command(state, proposal))
     assert any(event.type == "COMBAT_RESOLVED" for event in result.events)
     assert validate_state(state) == []
+
+
+class _FixedBadPolicy:
+    def __init__(self, intent: str, arguments: dict[str, object]) -> None:
+        self._intent = intent
+        self._arguments = arguments
+
+    def decide(self, observation):  # type: ignore[no-untyped-def]
+        return ActionProposal(
+            proposal_id="00000000-0000-4000-8000-000000000010",
+            decision_id="impossible",
+            npc_id=observation.npc_id,
+            observed_world_version=observation.world_version,
+            intent=self._intent,  # type: ignore[arg-type]
+            arguments=self._arguments,
+            valid_for_ticks=7,
+            memory_refs=[],
+            rationale_short="impossible plan",
+            confidence=0.9,
+        )
+
+
+def test_impossible_plans_are_safely_handled_every_time() -> None:
+    from world_core.worldgen import npc_id
+
+    from agent_runtime import decide_and_apply
+
+    state = create_world(42)
+    actor_id = npc_id("a_he")
+    bad_specs = [
+        ("claim_opportunity", {"opportunity_id": "missing"}),
+        (
+            "transfer_item",
+            {
+                "item_id": "missing",
+                "from": {"kind": "npc", "id": actor_id},
+                "to": {"kind": "npc", "id": actor_id},
+            },
+        ),
+        ("move", {"to_location_id": "missing"}),
+        ("attack", {"target_id": actor_id, "intent": "kill"}),
+        ("enter_secret_realm", {"realm_id": "missing"}),
+    ]
+    for index in range(20):
+        actor = state.npcs[actor_id]
+        if actor.active_action is not None:
+            advance_time(state, 31)
+        intent, arguments = bad_specs[index % len(bad_specs)]
+        result = decide_and_apply(state, actor_id, _FixedBadPolicy(intent, arguments))
+        assert result is not None
+        assert result.accepted is True
+        assert validate_state(state) == []

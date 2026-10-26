@@ -319,3 +319,47 @@ def test_secret_realm_closes_and_opportunity_expires() -> None:
     assert "SECRET_REALM_CLOSED" in types
     assert "OPPORTUNITY_EXPIRED" in types
     assert validate_state(state) == []
+
+
+def test_combat_death_blocks_further_actions() -> None:
+    from world_core.worldgen import npc_id
+
+    from world_core import LOC_XUANYUE_SECT
+
+    state = create_world(42)
+    attacker = state.npcs[npc_id("lu_xuanji")]
+    victim = state.npcs[npc_id("a_he")]
+    victim.location_id = LOC_XUANYUE_SECT
+    victim.health = 0.01
+    death_event = None
+    for _ in range(5):
+        if not victim.alive:
+            break
+        result = apply_command(
+            state,
+            make_command(
+                state,
+                attacker.npc_id,
+                "attack",
+                {"target_id": victim.npc_id, "intent": "kill"},
+                source="test",
+            ),
+        )
+        death_event = next((event for event in result.events if event.type == "NPC_DIED"), None)
+    assert victim.alive is False
+    assert death_event is not None
+    assert victim.active_action is None
+    assert validate_state(state) == []
+
+    with pytest.raises(CommandRejected) as error:
+        apply_command(
+            state,
+            make_command(
+                state,
+                victim.npc_id,
+                "start_cultivation",
+                {"days": 1},
+                source="test",
+            ),
+        )
+    assert error.value.code == "actor_dead"
