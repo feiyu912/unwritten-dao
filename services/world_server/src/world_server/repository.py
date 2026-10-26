@@ -15,6 +15,7 @@ from world_core import apply_command as core_apply
 from world_core import create_world as core_create_world
 from world_core import snapshot as core_snapshot
 from world_server.models import (
+    AgentDecisionRow,
     CommandLogRow,
     EventEdgeRow,
     SaveRow,
@@ -352,3 +353,60 @@ def _delete_after(
             CommandLogRow.state_version_after > state_version,
         )
     )
+
+
+def save_decisions(
+    session: Session,
+    *,
+    world_id: str,
+    records: list[object],
+    proposal: object | None,
+) -> None:
+    """Persist decision audit records; the proposal is stored on accepted rows."""
+    proposal_payload = None
+    if proposal is not None and hasattr(proposal, "model_dump"):
+        proposal_payload = proposal.model_dump(mode="json")  # type: ignore[union-attr]
+    for record in records:
+        payload = proposal_payload if getattr(record, "accepted", False) else None
+        session.add(
+            AgentDecisionRow(
+                world_id=uuid.UUID(world_id),
+                decision_id=record.decision_id,
+                npc_id=uuid.UUID(record.npc_id),
+                tick=record.tick,
+                world_version=record.world_version,
+                provider=record.provider,
+                model_version=record.model_version,
+                system_prompt=record.system_prompt,
+                user_prompt=record.user_prompt,
+                raw_response=record.raw_response,
+                attempts=record.attempts,
+                accepted=record.accepted,
+                error=record.error,
+                latency_ms=record.latency_ms,
+                proposal=payload,
+            )
+        )
+    session.commit()
+
+
+def list_decisions(
+    session: Session,
+    *,
+    npc_id: str | None = None,
+    tick: int | None = None,
+    accepted_only: bool = False,
+    limit: int = 200,
+) -> list[AgentDecisionRow]:
+    world_row = session.execute(select(WorldStateRow).limit(1)).scalar_one_or_none()
+    if world_row is None:
+        return []
+    query = select(AgentDecisionRow).where(AgentDecisionRow.world_id == world_row.world_id)
+    if npc_id is not None:
+        query = query.where(AgentDecisionRow.npc_id == uuid.UUID(npc_id))
+    if tick is not None:
+        query = query.where(AgentDecisionRow.tick == tick)
+    if accepted_only:
+        query = query.where(AgentDecisionRow.accepted.is_(True))
+    query = query.order_by(AgentDecisionRow.id.asc()).limit(limit)
+    return list(session.execute(query).scalars().all())

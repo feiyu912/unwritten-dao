@@ -42,7 +42,7 @@ def _clean_tables(session: Session) -> Iterator[None]:
     session.execute(
         text(
             "TRUNCATE save, world_snapshot, command_log, event_edge, "
-            "world_event, world_state, memory_episode CASCADE"
+            "world_event, world_state, memory_episode, agent_decision CASCADE"
         )
     )
     session.commit()

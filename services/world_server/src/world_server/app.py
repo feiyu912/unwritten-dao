@@ -7,6 +7,8 @@ in-process pub/sub; LLM-backed dialogue is intentionally absent.
 from __future__ import annotations
 
 import asyncio
+import os
+import time
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -16,9 +18,17 @@ from fastapi import Depends, FastAPI, HTTPException, Query, WebSocket, WebSocket
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from agent_runtime import NpcObservation, UtilityPolicy, build_observation
+from agent_runtime import (
+    DecisionRecord,
+    LLMPolicy,
+    NpcObservation,
+    ProposalRejected,
+    UtilityPolicy,
+    build_observation,
+)
 from world_core import CommandRejected, WorldCommand
 from world_core import snapshot as core_snapshot
+from world_server.agent_policy import policy_for
 from world_server.config import SETTINGS
 from world_server.db import get_engine, get_session_factory, session_dependency
 from world_server.repository import (
@@ -28,9 +38,11 @@ from world_server.repository import (
     apply_command,
     bootstrap,
     causality,
+    list_decisions,
     list_events,
     load_snapshot,
     load_state,
+    save_decisions,
     save_snapshot,
 )
 
@@ -115,17 +127,7 @@ def create_app() -> FastAPI:
         state = load_state(session)
         if str(npc_id) not in state.npcs:
             raise NotFound(f"unknown npc {npc_id}")
-        recent = list_events(session, after=max(0, state.last_event_id - 50))
-        recent_rows = [
-            {
-                "event_id": event.event_id,
-                "tick": event.tick,
-                "type": event.type,
-                "summary": _summarize(event.type, event.payload),
-            }
-            for event in recent
-        ]
-        return build_observation(state, str(npc_id), recent_events=recent_rows)
+        return build_observation(state, str(npc_id), recent_events=_recent_rows(session, state))
 
     @app.post("/v1/commands")
     def submit_command(session: SessionDep, command: dict[str, Any]) -> dict[str, Any]:
@@ -143,8 +145,56 @@ def create_app() -> FastAPI:
                 status_code=409,
                 detail={"code": "actor_busy", "message": "NPC is dead or mid-action"},
             )
-        observation = build_observation(state, str(npc_id))
-        proposal = UtilityPolicy().decide(observation)
+        if os.environ.get("AGENT_PROVIDER", "").strip().lower() == "replay":
+            rows = list_decisions(session, npc_id=str(npc_id), tick=state.tick, accepted_only=True)
+            if not rows or rows[-1].proposal is None:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "replay_fixture_missing",
+                        "message": f"no recorded proposal for {npc_id} at tick {state.tick}",
+                    },
+                )
+            return rows[-1].proposal
+
+        observation = build_observation(
+            state, str(npc_id), recent_events=_recent_rows(session, state)
+        )
+        try:
+            selection = policy_for(npc)
+        except RuntimeError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail={"code": "agent_provider_misconfigured", "message": str(exc)},
+            ) from exc
+
+        started = time.perf_counter()
+        try:
+            proposal = selection.policy.decide(observation)
+            records = (
+                list(selection.policy.records)
+                if isinstance(selection.policy, LLMPolicy)
+                else [_utility_record(observation, proposal.decision_id, started, error=None)]
+            )
+        except ProposalRejected as exc:
+            proposal = UtilityPolicy().decide(observation)
+            records = (
+                list(selection.policy.records) if isinstance(selection.policy, LLMPolicy) else []
+            )
+            records.append(
+                _utility_record(
+                    observation,
+                    f"fallback:{proposal.decision_id}",
+                    started,
+                    error=f"llm fallback: {exc.code}",
+                )
+            )
+        save_decisions(
+            session,
+            world_id=state.world_id,
+            records=records,
+            proposal=proposal,
+        )
         return proposal.model_dump(mode="json")
 
     @app.post("/v1/dialogue")
@@ -154,7 +204,7 @@ def create_app() -> FastAPI:
         if npc is None:
             raise NotFound(f"unknown npc {payload.get('npc_id')}")
         return {
-            "reply_text": f"（{npc.name}沉默不语。R1 服务器尚未接入语言模型。）",  # noqa: RUF001
+            "reply_text": f"（{npc.name}沉默不语。R1 服务器尚未接入语言模型。）",
             "proposal": None,
         }
 
@@ -195,6 +245,43 @@ def create_app() -> FastAPI:
             session.close()
 
     return app
+
+
+def _recent_rows(session: Session, state: Any) -> list[dict[str, Any]]:
+    recent = list_events(session, after=max(0, state.last_event_id - 50))
+    return [
+        {
+            "event_id": event.event_id,
+            "tick": event.tick,
+            "type": event.type,
+            "summary": _summarize(event.type, event.payload),
+        }
+        for event in recent
+    ]
+
+
+def _utility_record(
+    observation: NpcObservation,
+    decision_id: str,
+    started: float,
+    *,
+    error: str | None,
+) -> DecisionRecord:
+    return DecisionRecord(
+        decision_id=decision_id,
+        npc_id=observation.npc_id,
+        tick=observation.tick,
+        world_version=observation.world_version,
+        provider="utility",
+        model_version="rules-v1",
+        system_prompt="",
+        user_prompt="",
+        raw_response=None,
+        attempts=1,
+        accepted=True,
+        error=error,
+        latency_ms=round((time.perf_counter() - started) * 1000, 3),
+    )
 
 
 def _summarize(event_type: str, payload: dict[str, Any]) -> str:

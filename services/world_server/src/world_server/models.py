@@ -9,7 +9,9 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     ARRAY,
     BigInteger,
+    Boolean,
     DateTime,
+    Float,
     ForeignKey,
     Index,
     Integer,
@@ -167,3 +169,33 @@ class MemoryEpisodeRow(Base):
     )
 
     __table_args__ = (Index("ix_memory_episode_npc", "npc_id"),)
+
+
+class AgentDecisionRow(Base):
+    """Audit trail of agent decisions (LLM or deterministic fallback)."""
+
+    __tablename__ = "agent_decision"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    world_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("world_state.world_id"), nullable=False
+    )
+    decision_id: Mapped[str] = mapped_column(Text, nullable=False)
+    npc_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    tick: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    world_version: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    provider: Mapped[str] = mapped_column(Text, nullable=False)
+    model_version: Mapped[str] = mapped_column(Text, nullable=False)
+    system_prompt: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    user_prompt: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    raw_response: Mapped[str | None] = mapped_column(Text, nullable=True)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    accepted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    latency_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    proposal: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), default=_utcnow
+    )
+
+    __table_args__ = (Index("ix_agent_decision_world_npc_tick", "world_id", "npc_id", "tick"),)

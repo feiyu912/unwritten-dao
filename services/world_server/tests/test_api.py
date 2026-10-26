@@ -124,3 +124,93 @@ def test_causality_endpoint(client: TestClient) -> None:
     assert chain["events"][0]["event_id"] == event_id
 
     assert client.get("/v1/debug/causality/999999").status_code == 404
+
+
+def _decision(client: TestClient, npc_id: str) -> Any:
+    return client.post(f"/v1/agents/{npc_id}/decision")
+
+
+def test_decision_is_audited_for_utility(client: TestClient, session: Any) -> None:
+    from world_server.repository import list_decisions
+
+    response = _decision(client, PROTAGONIST_ID)
+    assert response.status_code == 200
+    rows = list_decisions(session, npc_id=PROTAGONIST_ID)
+    assert rows
+    assert rows[-1].provider == "utility"
+    assert rows[-1].accepted is True
+    assert rows[-1].proposal["npc_id"] == PROTAGONIST_ID
+
+
+def test_llm_mock_decision_records_prompt(
+    client: TestClient, session: Any, monkeypatch: Any
+) -> None:
+    from world_server.repository import list_decisions
+
+    monkeypatch.setenv("AGENT_PROVIDER", "llm-mock")
+    response = _decision(client, PROTAGONIST_ID)
+    assert response.status_code == 200
+    rows = list_decisions(session, npc_id=PROTAGONIST_ID, accepted_only=True)
+    assert rows[-1].provider == "MockInferenceProvider"
+    assert "自主角色" in rows[-1].system_prompt
+    assert "WORLD_FACTS" in rows[-1].user_prompt
+    assert rows[-1].proposal is not None
+
+
+def test_invalid_llm_falls_back_and_audits_both(
+    client: TestClient, session: Any, monkeypatch: Any
+) -> None:
+    from world_server.repository import list_decisions
+
+    monkeypatch.setenv("AGENT_PROVIDER", "llm-mock")
+    monkeypatch.setenv("LLM_MOCK_REPLY", "not json at all")
+    response = _decision(client, PROTAGONIST_ID)
+    assert response.status_code == 200
+    rows = list_decisions(session, npc_id=PROTAGONIST_ID)
+    assert any(not row.accepted and row.provider == "MockInferenceProvider" for row in rows)
+    accepted = [row for row in rows if row.accepted]
+    assert len(accepted) == 1
+    assert accepted[0].provider == "utility"
+    assert accepted[0].proposal is not None
+
+
+def test_background_npc_stays_on_utility(
+    client: TestClient, session: Any, monkeypatch: Any
+) -> None:
+    from world_core.worldgen import npc_id
+    from world_server.repository import list_decisions
+
+    monkeypatch.setenv("AGENT_PROVIDER", "llm-mock")
+    response = _decision(client, npc_id("a_he"))
+    assert response.status_code == 200
+    rows = list_decisions(session, npc_id=npc_id("a_he"))
+    assert rows[-1].provider == "utility"
+
+
+def test_replay_mode_returns_recorded_proposal(client: TestClient, monkeypatch: Any) -> None:
+    monkeypatch.setenv("AGENT_PROVIDER", "llm-mock")
+    recorded = _decision(client, PROTAGONIST_ID)
+    assert recorded.status_code == 200
+
+    monkeypatch.setenv("AGENT_PROVIDER", "replay")
+    replayed = _decision(client, PROTAGONIST_ID)
+    assert replayed.status_code == 200
+    assert replayed.json() == recorded.json()
+
+    snapshot = client.get("/v1/world/snapshot").json()
+    advance = {
+        "schema_version": "world-command.v1",
+        "command_id": "22222222-2222-4222-8222-222222222222",
+        "idempotency_key": "api:replay-advance",
+        "world_id": snapshot["world_id"],
+        "actor_id": None,
+        "issued_tick": snapshot["tick"],
+        "expected_state_version": snapshot["state_version"],
+        "type": "advance_time",
+        "arguments": {"ticks": 1},
+        "source": "system",
+    }
+    assert client.post("/v1/commands", json=advance).status_code == 200
+    missing = _decision(client, PROTAGONIST_ID)
+    assert missing.status_code == 409
+    assert missing.json()["detail"]["code"] == "replay_fixture_missing"
