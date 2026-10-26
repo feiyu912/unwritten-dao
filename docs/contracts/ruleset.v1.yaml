@@ -84,7 +84,7 @@ lifespan:
   aging_damage_per_decade_after_lifespan: 0.25
   natural_death_check: end_of_tick
 
-companionship:
+memory:
   max_memories_in_prompt: 8
   recall_top_k: 5
   score_weights:
@@ -93,6 +93,9 @@ companionship:
     importance: 0.2
     person: 0.1
     causal: 0.05
+  default_embedding_dim: 768
+  importance_floor: 0.05
+  recent_event_window: 12
 
 combat:
   power: "realm_multiplier * technique * gear * health * situation"
@@ -124,11 +127,6 @@ agents:
   max_repair_attempts: 1
   decision_timeout_seconds: 20
   proposal_valid_ticks: 7
-
-memory:
-  default_embedding_dim: 768
-  importance_floor: 0.05
-  recent_event_window: 12
 
 world:
   npc_count: 30

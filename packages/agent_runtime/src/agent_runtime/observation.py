@@ -65,9 +65,7 @@ def build_observation(
             wealth=npc.wealth,
             lifespan_ticks=npc.lifespan_ticks,
             birth_tick=npc.birth_tick,
-            estimated_remaining_life_ticks=max(
-                0, npc.birth_tick + npc.lifespan_ticks - state.tick
-            ),
+            estimated_remaining_life_ticks=max(0, npc.birth_tick + npc.lifespan_ticks - state.tick),
             traits=dict(npc.traits),
         ),
         inventory=_inventory(state, npc),
@@ -135,9 +133,7 @@ def _observed_item(item: Item) -> ObservedItem:
     )
 
 
-def _visible_opportunities(
-    state: WorldState, location: Location
-) -> list[VisibleOpportunity]:
+def _visible_opportunities(state: WorldState, location: Location) -> list[VisibleOpportunity]:
     opportunities: list[VisibleOpportunity] = []
     for opportunity_id in sorted(state.opportunities):
         opportunity = state.opportunities[opportunity_id]

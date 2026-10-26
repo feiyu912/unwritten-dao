@@ -171,9 +171,9 @@ def parse_proposal(raw: str, observation: NpcObservation) -> ActionProposal:
     if not isinstance(arguments, dict):
         raise ProposalParseError("arguments must be an object")
     decision_id = str(data.get("decision_id") or _decision_id(observation, 0))[:128]
-    allowed_events = {
-        memory.event_id for memory in observation.memories
-    } | {event.event_id for event in observation.recent_events}
+    allowed_events = {memory.event_id for memory in observation.memories} | {
+        event.event_id for event in observation.recent_events
+    }
     memory_refs = [
         ref
         for ref in data.get("memory_refs", [])

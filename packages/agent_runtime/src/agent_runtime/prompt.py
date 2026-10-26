@@ -26,8 +26,7 @@ _INTENT_GUIDE = {
         '"to": {"kind": "npc|location", "id": "<id>"}}'
     ),
     "investigate": (
-        '{"target_location_id": "<current location id>", '
-        '"focus": "secret_realm|person|item|rumor"}'
+        '{"target_location_id": "<current location id>", "focus": "secret_realm|person|item|rumor"}'
     ),
     "enter_secret_realm": '{"realm_id": "<discovered realm id>"}',
     "claim_opportunity": '{"opportunity_id": "<visible opportunity id>"}',
@@ -82,9 +81,7 @@ def _user_prompt(obs: NpcObservation) -> str:
     lines.append(f"- {obs.location_id}")
     if obs.visible_items:
         lines.append("可见物品：")
-        lines.extend(
-            f"- {item.item_id} ({item.name}, {item.kind})" for item in obs.visible_items
-        )
+        lines.extend(f"- {item.item_id} ({item.name}, {item.kind})" for item in obs.visible_items)
     if obs.visible_opportunities:
         lines.append("可见机缘：")
         lines.extend(
@@ -113,9 +110,7 @@ def _user_prompt(obs: NpcObservation) -> str:
     lines.append("\nWORLD_FACTS")
     lines.append("- 上述自身状态、在场人物、可见物品、可见机缘与已知地点是权威事实。")
     if obs.recent_events:
-        lines.extend(
-            f"- [E{event.event_id}] {event.summary}" for event in obs.recent_events
-        )
+        lines.extend(f"- [E{event.event_id}] {event.summary}" for event in obs.recent_events)
 
     lines.append("\nBELIEFS（可能错误，不能当作事实）")
     if obs.beliefs:

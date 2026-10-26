@@ -14,6 +14,12 @@ from agent_runtime.llm import (
     ProposalReplayPolicy,
     parse_proposal,
 )
+from agent_runtime.memory import (
+    InMemoryEpisodeStore,
+    MemoryEpisode,
+    MemoryStore,
+    score_memory,
+)
 from agent_runtime.models import (
     ActionProposal,
     ActiveActionView,
@@ -35,6 +41,7 @@ from agent_runtime.models import (
 from agent_runtime.observation import build_observation
 from agent_runtime.policy import UtilityPolicy
 from agent_runtime.prompt import build_planning_prompt, repair_prompt
+from agent_runtime.providers import OpenAICompatibleProvider, ProviderError
 from agent_runtime.validator import ProposalRejected, decide_command, proposal_to_command
 
 __all__ = [
@@ -42,10 +49,13 @@ __all__ = [
     "ActiveActionView",
     "AgentPolicy",
     "DecisionRecord",
+    "InMemoryEpisodeStore",
     "InferenceProvider",
     "KnownLocation",
     "LLMPolicy",
+    "MemoryEpisode",
     "MemoryRecord",
+    "MemoryStore",
     "MockInferenceProvider",
     "NpcObservation",
     "ObservationSelf",
@@ -53,10 +63,12 @@ __all__ = [
     "ObservedGoal",
     "ObservedItem",
     "ObservedRelationship",
+    "OpenAICompatibleProvider",
     "ProposalIntent",
     "ProposalParseError",
     "ProposalRejected",
     "ProposalReplayPolicy",
+    "ProviderError",
     "RecentEvent",
     "ReplayExhausted",
     "ReplayInferenceProvider",
@@ -69,4 +81,5 @@ __all__ = [
     "parse_proposal",
     "proposal_to_command",
     "repair_prompt",
+    "score_memory",
 ]

@@ -155,9 +155,7 @@ def test_secret_interior_appears_only_after_map_and_investigation() -> None:
         (PROTAGONIST_ID, 1),
     ],
 )
-def test_invalid_proposal_falls_back_exactly_once(
-    npc_id: str, version_offset: int
-) -> None:
+def test_invalid_proposal_falls_back_exactly_once(npc_id: str, version_offset: int) -> None:
     state = create_world(42)
     bad = _StubPolicy(npc_id=npc_id, version_offset=version_offset)
     fallback = _StubPolicy()

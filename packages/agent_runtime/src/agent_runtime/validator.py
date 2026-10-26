@@ -81,9 +81,7 @@ def decide_command(
     if not npc.alive or npc.active_action is not None:
         return None
 
-    observation = build_observation(
-        state, npc_id, memories=memories, recent_events=recent_events
-    )
+    observation = build_observation(state, npc_id, memories=memories, recent_events=recent_events)
     try:
         proposal = policy.decide(observation)
         return _command_for(state, npc_id, observation, proposal)
@@ -129,10 +127,7 @@ def _idempotency_key(state: WorldState, proposal: ActionProposal) -> str:
     )
     material = f"{proposal.decision_id}|{proposal.intent}|{arguments}"
     digest = hashlib.sha256(material.encode("utf-8")).hexdigest()[:24]
-    key = (
-        f"agent:{proposal.npc_id}:{proposal.intent}:"
-        f"{state.state_version}:{digest}"
-    )
+    key = f"agent:{proposal.npc_id}:{proposal.intent}:{state.state_version}:{digest}"
     return key[:128]
 
 

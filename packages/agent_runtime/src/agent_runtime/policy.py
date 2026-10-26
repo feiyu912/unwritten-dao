@@ -32,9 +32,7 @@ class UtilityPolicy:
                 return special
         return _cultivate(observation)
 
-    def _breakthrough_path(
-        self, obs: NpcObservation, goal: ObservedGoal
-    ) -> ActionProposal | None:
+    def _breakthrough_path(self, obs: NpcObservation, goal: ObservedGoal) -> ActionProposal | None:
         locations = {location.location_id: location for location in obs.known_locations}
         current = obs.location_id
         pill = _owned_pill(obs)
@@ -50,9 +48,9 @@ class UtilityPolicy:
 
         if current in locations and locations[current].kind == "secret_realm":
             if obs.visible_opportunities:
-                opportunity = sorted(
-                    obs.visible_opportunities, key=lambda row: row.opportunity_id
-                )[0]
+                opportunity = sorted(obs.visible_opportunities, key=lambda row: row.opportunity_id)[
+                    0
+                ]
                 return _proposal(
                     obs,
                     "claim_opportunity",
@@ -205,9 +203,8 @@ def _owned_map(observation: NpcObservation) -> ObservedItem | None:
 def _at_realm_cap(self_view: ObservationSelf) -> bool:
     if self_view.realm not in RULESET.realms:
         return False
-    return (
-        self_view.stage >= RULESET.max_stage(self_view.realm)
-        and self_view.qi >= RULESET.cap_qi(self_view.realm)
+    return self_view.stage >= RULESET.max_stage(self_view.realm) and self_view.qi >= RULESET.cap_qi(
+        self_view.realm
     )
 
 
@@ -226,9 +223,7 @@ def _known_interior(observation: NpcObservation, current: str) -> KnownLocation 
     return sorted(candidates, key=lambda location: location.location_id)[0]
 
 
-def _belief_target(
-    observation: NpcObservation, locations: dict[str, KnownLocation]
-) -> str | None:
+def _belief_target(observation: NpcObservation, locations: dict[str, KnownLocation]) -> str | None:
     leads: list[ObservedBelief] = [
         belief
         for belief in observation.beliefs
