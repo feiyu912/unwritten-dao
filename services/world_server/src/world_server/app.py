@@ -308,3 +308,6 @@ def _utility_record(
 
 
 __all__ = ["create_app"]
+
+
+app = create_app()
