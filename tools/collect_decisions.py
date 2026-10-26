@@ -20,11 +20,13 @@ from agent_runtime.dataset import DecisionRecorder, RecordingPolicy, write_jsonl
 from agent_runtime.validator import proposal_to_command
 
 from agent_runtime import (
+    DecisionModelPolicy,
     LLMPolicy,
     MockInferenceProvider,
     ProposalRejected,
     RivalryPolicy,
     UtilityPolicy,
+    UtilityScoringModel,
     build_observation,
 )
 from world_core import (
@@ -55,6 +57,8 @@ def _policy(name: str, recorder: DecisionRecorder) -> RecordingPolicy:
         base = RivalryPolicy()
     elif name == "llm-mock":
         base = LLMPolicy(MockInferenceProvider(reply=MOCK_REPLY), model_version="mock-v1")
+    elif name == "decision-model":
+        base = DecisionModelPolicy(UtilityScoringModel())
     else:
         raise ValueError(f"unknown policy {name}")
     return RecordingPolicy(base, recorder, name=name)
@@ -94,7 +98,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Collect decision samples.")
     parser.add_argument("--days", type=int, default=10)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--policy", choices=["utility", "rivalry", "llm-mock"], default="utility")
+    parser.add_argument(
+        "--policy",
+        choices=["utility", "rivalry", "llm-mock", "decision-model"],
+        default="utility",
+    )
     parser.add_argument(
         "--out", type=pathlib.Path, default=pathlib.Path("reports/decisions_dataset.jsonl")
     )

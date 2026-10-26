@@ -99,8 +99,10 @@ The policy receives everything it needs from the observation; it must not import
 decision: the observation dump, strategic goal, candidates with legal mask and scores, chosen
 action, value estimate, and cited event ids (`PolicyDecisionRecord`). Illegal candidates are
 masked; all-illegal/model-error cases fall back to `UtilityPolicy` once. It never mutates state.
-`UtilityCandidateGenerator` is the baseline candidate source; future BC/RL models implement the
-same protocol without changing policies or the simulator.
+`UtilityCandidateGenerator` is the baseline candidate source; `UtilityScoringModel` is a
+reference scorer that selects the utility candidate and exists to exercise the interface before a
+trained action scorer exists. Future BC/RL models implement the same protocol without changing
+policies or the simulator. `tools.collect_decisions --policy decision-model` records this path.
 
 ## Decision dataset
 

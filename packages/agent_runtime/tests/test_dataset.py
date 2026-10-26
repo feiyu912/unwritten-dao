@@ -62,3 +62,11 @@ def test_collection_is_deterministic() -> None:
     assert [sample.to_dict() for sample in first.samples] == [
         sample.to_dict() for sample in second.samples
     ]
+
+
+def test_decision_model_policy_can_be_collected() -> None:
+    recorder, state = collect(days=1, seed=42, policy_name="decision-model")
+    assert recorder.samples
+    assert all(sample.policy == "decision-model" for sample in recorder.samples)
+    assert all(sample.outcome == "accepted" for sample in recorder.samples)
+    assert validate_state(state) == []

@@ -65,6 +65,34 @@ class CandidateGenerator(Protocol):
     def generate(self, observation: NpcObservation) -> list[ActionCandidate]: ...
 
 
+class UtilityScoringModel:
+    """Reference scoring model: prefers the utility proposal, no learning.
+
+    Used to exercise the pluggable interface end-to-end before a trained
+    action scorer exists. It never overrides the generator's legality mask.
+    """
+
+    def __init__(self, fallback: UtilityPolicy | None = None) -> None:
+        self._utility = fallback or UtilityPolicy()
+
+    def score(
+        self, observation: NpcObservation, candidates: Sequence[ActionCandidate]
+    ) -> list[float]:
+        reference = self._utility.decide(observation)
+        scores: list[float] = []
+        for candidate in candidates:
+            if candidate.intent == reference.intent and candidate.arguments == reference.arguments:
+                scores.append(1.0)
+            elif candidate.intent == reference.intent:
+                scores.append(0.5)
+            else:
+                scores.append(0.0)
+        return scores
+
+    def value(self, observation: NpcObservation) -> float:
+        return 0.5
+
+
 class UtilityCandidateGenerator:
     """Emits the utility proposal plus conservative wait/cultivate alternatives."""
 
@@ -297,4 +325,5 @@ __all__ = [
     "PolicyDecisionRecord",
     "StrategicGoal",
     "UtilityCandidateGenerator",
+    "UtilityScoringModel",
 ]

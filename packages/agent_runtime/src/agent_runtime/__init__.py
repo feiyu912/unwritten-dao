@@ -16,6 +16,7 @@ from agent_runtime.decision import (
     PolicyDecisionRecord,
     StrategicGoal,
     UtilityCandidateGenerator,
+    UtilityScoringModel,
 )
 from agent_runtime.embeddings import (
     EmbeddingProvider,
@@ -129,6 +130,7 @@ __all__ = [
     "StrategicGoal",
     "UtilityCandidateGenerator",
     "UtilityPolicy",
+    "UtilityScoringModel",
     "VisibleNpc",
     "VisibleOpportunity",
     "WorldFacts",
