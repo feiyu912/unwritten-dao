@@ -268,3 +268,47 @@ def test_events_become_episodic_memories_without_duplicates(session: Session) ->
     )
     assert recalled
     assert any("secret realm" in memory["summary"] for memory in recalled)
+
+
+def test_memories_get_pgvector_embeddings(session: Session, monkeypatch) -> None:
+    from world_server.memory_store import retrieve_memories
+    from world_server.models import MemoryEpisodeRow
+
+    monkeypatch.setenv("EMBEDDING_PROVIDER", "hash")
+    state = bootstrap(session, seed=42)
+    actor = state.npcs[PROTAGONIST_ID]
+    steps = [
+        ("move", {"to_location_id": LOC_BLACKWOOD_FOREST}),
+        ("move", {"to_location_id": LOC_RUINED_TEMPLE}),
+        (
+            "transfer_item",
+            {
+                "item_id": ITEM_MAP_FRAGMENT,
+                "from": {"kind": "location", "id": LOC_RUINED_TEMPLE},
+                "to": {"kind": "npc", "id": actor.npc_id},
+            },
+        ),
+        ("move", {"to_location_id": LOC_MISTY_VALLEY}),
+        ("investigate", {"target_location_id": LOC_MISTY_VALLEY, "focus": "secret_realm"}),
+    ]
+    for intent, arguments in steps:
+        current = load_state(session)
+        apply_command(
+            session,
+            make_command(current, actor.npc_id, intent, arguments, source="test"),  # type: ignore[arg-type]
+        )
+
+    rows = (
+        session.execute(
+            select(MemoryEpisodeRow).where(MemoryEpisodeRow.npc_id == uuid.UUID(actor.npc_id))
+        )
+        .scalars()
+        .all()
+    )
+    embedded = [row for row in rows if row.embedding is not None]
+    assert embedded
+    assert len(embedded[0].embedding) == 768
+
+    current = load_state(session)
+    recalled = retrieve_memories(session, current, actor.npc_id)
+    assert recalled

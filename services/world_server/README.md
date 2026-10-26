@@ -26,6 +26,18 @@ uv run pytest services/world_server/tests -m integration -q
 CI runs the same suite against an ephemeral pgvector service container. Do not substitute
 SQLite; JSONB semantics and `CREATE EXTENSION vector` are part of the schema contract.
 
+## Agent and embedding modes
+
+| Env | Values | Meaning |
+|---|---|---|
+| `AGENT_PROVIDER` | `utility` (default), `llm-mock`, `openai`, `replay` | decision policy for the six major roles |
+| `LLM_BASE_URL` / `LLM_MODEL` / `LLM_API_KEY` | — | required for `openai` |
+| `EMBEDDING_PROVIDER` | `off` (default), `hash`, `openai` | memory vector indexing; `hash` is for offline plumbing tests |
+| `EMBEDDING_BASE_URL` / `EMBEDDING_MODEL` / `EMBEDDING_API_KEY` | — | required for `openai` embeddings (dimension must be 768) |
+
+Embedding failures are logged and the memory row is stored without a vector; the world command
+transaction never fails because of an index error.
+
 ## Guarantees
 
 - Every command is applied in one transaction: state row update + event rows + causal edges +

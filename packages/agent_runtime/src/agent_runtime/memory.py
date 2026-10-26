@@ -62,10 +62,15 @@ def score_memory(
     query_tokens: set[str],
     person_ids: Sequence[str],
     causal_event_ids: Sequence[int],
+    query_embedding: Sequence[float] | None = None,
 ) -> float:
     weights = RULESET.memory["score_weights"]
     summary_tokens = tokens(episode.summary)
-    if query_tokens and summary_tokens:
+    if query_embedding is not None and episode.embedding is not None:
+        from agent_runtime.embeddings import cosine
+
+        semantic = max(0.0, cosine(query_embedding, episode.embedding))
+    elif query_tokens and summary_tokens:
         semantic = len(query_tokens & summary_tokens) / len(query_tokens | summary_tokens)
     else:
         semantic = 0.0
@@ -100,6 +105,7 @@ class InMemoryEpisodeStore:
         query: str = "",
         person_ids: Sequence[str] = (),
         causal_event_ids: Sequence[int] = (),
+        query_embedding: Sequence[float] | None = None,
         top_k: int = 5,
     ) -> list[MemoryEpisode]:
         query_tokens = tokens(query)
@@ -115,6 +121,7 @@ class InMemoryEpisodeStore:
                         query_tokens=query_tokens,
                         person_ids=person_ids,
                         causal_event_ids=causal_event_ids,
+                        query_embedding=query_embedding,
                     ),
                     episode,
                 )

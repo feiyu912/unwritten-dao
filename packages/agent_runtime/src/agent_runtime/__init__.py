@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+from agent_runtime.embeddings import (
+    EmbeddingProvider,
+    HashingEmbeddingProvider,
+    OpenAICompatibleEmbeddingProvider,
+    cosine,
+)
 from agent_runtime.inference import (
     MockInferenceProvider,
     ReplayExhausted,
@@ -49,6 +55,8 @@ __all__ = [
     "ActiveActionView",
     "AgentPolicy",
     "DecisionRecord",
+    "EmbeddingProvider",
+    "HashingEmbeddingProvider",
     "InMemoryEpisodeStore",
     "InferenceProvider",
     "KnownLocation",
@@ -63,6 +71,7 @@ __all__ = [
     "ObservedGoal",
     "ObservedItem",
     "ObservedRelationship",
+    "OpenAICompatibleEmbeddingProvider",
     "OpenAICompatibleProvider",
     "ProposalIntent",
     "ProposalParseError",
@@ -77,6 +86,7 @@ __all__ = [
     "VisibleOpportunity",
     "build_observation",
     "build_planning_prompt",
+    "cosine",
     "decide_command",
     "parse_proposal",
     "proposal_to_command",

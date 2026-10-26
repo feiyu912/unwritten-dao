@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Any
 
@@ -12,8 +13,11 @@ from world_core.models import WorldState
 from world_core.ruleset import RULESET
 
 from agent_runtime import InMemoryEpisodeStore, MemoryEpisode
+from world_server.embeddings import build_embedding_provider
 from world_server.models import MemoryEpisodeRow
 from world_server.summaries import summarize_event
+
+LOGGER = logging.getLogger(__name__)
 
 # event type -> (importance, emotional valence); absent types are not remembered
 _MEMORY_RULES: dict[str, tuple[float, float]] = {
@@ -68,22 +72,38 @@ def record_event_memories(
             )
         ).all()
     }
+    candidates: list[tuple[str, str, float, float, int, int]] = []
     for event in events:
         for npc_id, summary, importance, valence in memory_candidates(state, event):
             key = (uuid.UUID(npc_id), event.event_id)
             if key in existing:
                 continue
             existing.add(key)
-            session.add(
-                MemoryEpisodeRow(
-                    npc_id=uuid.UUID(npc_id),
-                    source_event_id=event.event_id,
-                    summary=summary,
-                    importance=importance,
-                    emotional_valence=valence,
-                    created_tick=event.tick,
-                )
+            candidates.append((npc_id, summary, importance, valence, event.event_id, event.tick))
+    if not candidates:
+        return
+    embeddings: list[list[float] | None] = [None] * len(candidates)
+    provider = build_embedding_provider()
+    if provider is not None:
+        try:
+            vectors = provider.embed_many([row[1] for row in candidates])
+            embeddings = [list(vector) for vector in vectors]
+        except Exception as exc:  # derived index only; never fail the world transaction
+            LOGGER.warning("memory embedding failed, storing rows without vectors: %s", exc)
+    for (npc_id, summary, importance, valence, event_id, event_tick), embedding in zip(
+        candidates, embeddings, strict=True
+    ):
+        session.add(
+            MemoryEpisodeRow(
+                npc_id=uuid.UUID(npc_id),
+                source_event_id=event_id,
+                summary=summary,
+                importance=importance,
+                emotional_valence=valence,
+                created_tick=event_tick,
+                embedding=embedding,
             )
+        )
 
 
 def retrieve_memories(
@@ -115,15 +135,25 @@ def retrieve_memories(
             importance=row.importance,
             emotional_valence=row.emotional_valence,
             created_tick=row.created_tick,
+            embedding=tuple(row.embedding) if row.embedding is not None else None,
         )
         for row in rows
     ]
     store = InMemoryEpisodeStore(episodes)
+    query = " ".join(goal.kind for goal in state.npcs[npc_id].goals if goal.status == "active")
+    query_embedding = None
+    provider = build_embedding_provider()
+    if provider is not None:
+        try:
+            query_embedding = provider.embed_many([query or "memory"])[0]
+        except Exception as exc:
+            LOGGER.warning("query embedding failed, falling back to lexical: %s", exc)
     hits = store.retrieve(
         npc_id=npc_id,
         now_tick=state.tick,
-        query="",
+        query=query,
         causal_event_ids=recent_event_ids or [],
+        query_embedding=query_embedding,
         top_k=top_k or int(RULESET.memory["recall_top_k"]),
     )
     return [
