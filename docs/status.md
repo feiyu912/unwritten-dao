@@ -21,8 +21,8 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | 20-year agent history | `tools/narrative_report.py`: **1.9 s**, protagonist reaches realm 2, causal chains + faction outcomes | verified |
 | Character life query | `tools/character_history.py --npc 沈砚 --years 20`: full event-ID timeline | verified |
 | History dashboard | self-contained HTML (region map, NPC/faction state, causal timeline); rendered and checked in Chrome | verified |
-| 20-year persisted history | `tools/bench_db.py`: **8.72 s**, 1707 events, 600 memories, state valid | verified |
-| Database size target | same run: **18.2 MB** total (< 1 GB) | verified (cultivation-only history) |
+| 20-year persisted history | `tools/seed_history.py`: agent-driven, **4.0 s**, 21,897 events, 7,042 memories, API reloads at tick 7300 | verified |
+| Database size target | seeded 20-year agent history: **19.4 MB** total (< 1 GB) | verified |
 | PostgreSQL persistence | 22 integration tests against real pgvector PostgreSQL 17 | verified |
 | Idempotency & concurrency | two threads race one version: exactly one writer, one stale; duplicate key returns stored result; command_id reuse → 409 | verified |
 | Migration round trip | `alembic downgrade base` then `upgrade head` succeeds; same step runs in CI | verified |
@@ -58,8 +58,8 @@ excluded from the fast suite).
 5. **Causal coverage** — instrumented via `tools/report_history.py`; the 400-day run shows 100%
    coverage on important events, but provenance is "the actor's previous event" (linear).
    Multi-cause links and subjective meaningfulness are not modeled.
-6. **Database size** — measured at 18.2 MB for a cultivation-only 20-year history. A full
-   agent-driven history with more movable/combat events would be larger; still far under 1 GB.
+6. **Database size** — measured at 19.4 MB for a 20-year agent-driven history (21,897 events).
+   A longer or more conflict-heavy history would grow; still far under 1 GB.
 7. **Multi-user / auth / process recovery** — single world, single process, no authentication.
 
 ## Next R3 work

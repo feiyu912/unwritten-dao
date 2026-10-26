@@ -40,6 +40,16 @@ The cross-platform determinism gate is `tests/e2e/test_determinism_golden.py`: t
 yearly-cultivation history must hash to the recorded golden on both macOS ARM64 and Linux
 x86_64. If a rule change is intentional, update the golden in the same PR and say why.
 
+## 2b. Seed a 20-year agent history (optional, destructive)
+
+```bash
+uv run python -m tools.seed_history --years 20 --reset
+```
+
+This truncates the local tables, simulates 30 NPCs for 7,300 days with the deterministic
+policies, and persists the state/events/memories in one transaction (~4 s, ~19 MB). The server
+then boots at tick 7300 with a full history.
+
 ## 3. Run the server
 
 ```bash

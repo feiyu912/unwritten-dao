@@ -28,6 +28,7 @@ from world_core import (
     WorldCommand,
     make_command,
     state_checksum,
+    validate_state,
 )
 
 pytestmark = pytest.mark.integration
@@ -388,3 +389,21 @@ def test_concurrent_commands_allow_exactly_one_writer(session: Session) -> None:
     assert outcomes == ["ok", "stale"]
     final = load_state(session)
     assert final.state_version == 1
+
+
+def test_agent_history_persists_and_reloads(session: Session) -> None:
+    from world_server.history import persist_history, simulate_days
+    from world_server.models import MemoryEpisodeRow
+
+    state = bootstrap(session, seed=42)
+    events = simulate_days(state, 10)
+    persist_history(session, state, events)
+
+    reloaded = load_state(session)
+    assert reloaded.tick == 10
+    assert state_checksum(reloaded) == state_checksum(state)
+    assert validate_state(reloaded) == []
+    event_count = session.execute(select(func.count()).select_from(WorldEventRow)).scalar_one()
+    assert event_count == len(events) == state.last_event_id
+    memory_count = session.execute(select(func.count()).select_from(MemoryEpisodeRow)).scalar_one()
+    assert memory_count > 0
