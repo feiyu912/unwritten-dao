@@ -34,6 +34,18 @@ evidence exists yet.
 | R2 memory + LLM agents | PARTIAL | LLM policy, audit, replay, memory, dialogue verified with mock providers; 3D interaction not built |
 | R3 playable MVP | PARTIAL | Headless play CLI, history dashboard, HTTP playthrough, save/load, causal queries; UE5 client unvalidated |
 
+## Latest verification (2026-10-26, local + GitHub CI)
+
+- Fast suite, PostgreSQL integration suite, and the 100k-event slow test: all green.
+- 20-year rules benchmark: 0.121 s, 569 events, state valid.
+- 400-day causal report: coverage 1.0; goals {active: 29, achieved: 1};
+  resolved-goal persistence 1.0; no invariant violations.
+- 20-year fate test: baseline realm 2 with the map; stolen-map world realm 1,
+  no discovery, checksums diverge.
+- Persisted 20-year history: 7.69 s, 21,897 events, 7,042 memories, 19.5 MB.
+- DB-backed dashboard: rendered from 21,897 persisted events.
+- CI run `40293263312`: macOS ARM64, Ubuntu x86_64, PostgreSQL integration all green.
+
 ## How to reproduce the PASS rows
 
 ```bash
