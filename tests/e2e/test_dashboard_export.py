@@ -16,3 +16,4 @@ def test_dashboard_is_self_contained_and_contains_the_story() -> None:
     assert "violations: none" in page
     assert "故事线" in page
     assert "score=" in page
+    assert "world advanced to tick" not in page

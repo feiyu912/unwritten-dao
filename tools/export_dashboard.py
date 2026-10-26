@@ -169,10 +169,11 @@ def _timeline(state, events) -> str:
 
 
 def _threads(state, events) -> str:
+    index = {event.event_id: event for event in events}
     rows = []
     for thread in find_story_threads(events):
         steps = "".join(
-            f"<li>{_esc(_thread_summary(state, events[event_id]))}</li>"
+            f"<li>{_esc(_thread_summary(state, index[event_id]))}</li>"
             for event_id in thread.event_ids
         )
         rows.append(
