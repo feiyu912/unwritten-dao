@@ -25,7 +25,8 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Memory recall gate | labeled Recall@5 = 10/10 in `tests/e2e/test_memory_recall.py` | verified (small set) |
 | Dialogue | mock/OpenAI-compatible modes; deterministic fallback; no hidden facts | verified with mock |
 | Playable headless demo | `uv run python -m tools.play`; scripted smoke test traverses map → realm → pill | verified |
-| CI | run `40282796083`: macOS ARM64, Ubuntu x86_64, PostgreSQL integration all green | verified |
+| Cross-platform determinism | golden 20-year checksum asserted on both macOS ARM64 and Ubuntu x86_64 in CI | verified |
+| CI | macOS ARM64, Ubuntu x86_64, PostgreSQL integration all green | verified |
 | Real-process HTTP | uvicorn + httpx: snapshot (30 NPCs), observation (3 memories), decision, dialogue fallback, idempotent 200, stale 409 | verified |
 | Static gates | `ruff check .` clean; `mypy` clean on 32 source files | verified |
 
