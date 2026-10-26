@@ -4,7 +4,10 @@ A deterministic xianxia world simulation where persistent NPCs pursue goals, for
 and change a canonical storyline through validated actions. The simulator owns truth; language
 models only propose actions.
 
-**Status:** R0/R1 — headless causal world in progress.
+**Status:** R1 complete; R2 headless agent stack complete (LLM proposal pipeline, episodic
+memory, dialogue, audit/replay); R3 playable headless demo available. The UE5 client is an
+unvalidated scaffold; 3D/FPS work awaits a machine with Unreal. See
+[`docs/status.md`](docs/status.md) for the evidence table and remaining gaps.
 
 ## Architecture in one paragraph
 
@@ -17,8 +20,11 @@ HTTP/WebSocket APIs. A UE5 client renders the authoritative state; it never simu
 
 ```bash
 uv sync --all-packages
-uv run pytest -m "not integration and not slow"
+uv run pytest packages services tests clients/unreal/tools -m "not integration and not slow"
 uv run python -m tools.bench_sim --npcs 30 --years 20 --seed 42
+uv run python -m tools.demo_causal --days 400     # baseline vs stolen-map timeline
+uv run python -m tools.play                        # playable headless MVP
+uv run uvicorn world_server.app:app --port 8000    # HTTP/WS server (needs PostgreSQL)
 ```
 
 PostgreSQL integration tests (optional locally):
