@@ -43,3 +43,6 @@ bench-memory:
 
 dashboard-db:
 	uv run python -m tools.export_dashboard --from-db --out reports/dashboard_db.html
+
+collect-decisions:
+	uv run python -m tools.collect_decisions --days 10

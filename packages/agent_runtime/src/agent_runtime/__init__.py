@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+from agent_runtime.dataset import (
+    DecisionRecorder,
+    DecisionSample,
+    RecordingPolicy,
+    write_jsonl,
+)
 from agent_runtime.decision import (
     ActionCandidate,
     CandidateGenerator,
@@ -84,6 +90,8 @@ __all__ = [
     "DecisionModel",
     "DecisionModelPolicy",
     "DecisionRecord",
+    "DecisionRecorder",
+    "DecisionSample",
     "EmbeddingProvider",
     "HashingEmbeddingProvider",
     "InMemoryEpisodeStore",
@@ -113,6 +121,7 @@ __all__ = [
     "ProposalReplayPolicy",
     "ProviderError",
     "RecentEvent",
+    "RecordingPolicy",
     "ReplayExhausted",
     "ReplayInferenceProvider",
     "RivalryPolicy",
@@ -135,4 +144,5 @@ __all__ = [
     "proposal_to_command",
     "repair_prompt",
     "score_memory",
+    "write_jsonl",
 ]

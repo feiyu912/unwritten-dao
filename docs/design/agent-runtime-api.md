@@ -102,6 +102,14 @@ masked; all-illegal/model-error cases fall back to `UtilityPolicy` once. It neve
 `UtilityCandidateGenerator` is the baseline candidate source; future BC/RL models implement the
 same protocol without changing policies or the simulator.
 
+## Decision dataset
+
+`DecisionRecorder` + `RecordingPolicy` wrap any policy and produce `DecisionSample` rows:
+public observation, goals, available actions, chosen proposal, rationale/confidence, cited event
+ids, simulator outcome, rejection code, and resulting event ids. `tools.collect_decisions` writes
+JSONL for future BC / action scoring / RL. The available-actions list is a coarse mask; the
+simulator outcome is the authoritative legality label.
+
 ## Knowledge boundary
 
 `NpcKnowledgeView` separates authoritative facts, private state, fallible beliefs, and memories;
