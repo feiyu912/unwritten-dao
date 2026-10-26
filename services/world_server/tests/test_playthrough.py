@@ -5,6 +5,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from world_server.app import create_app
 
 from world_core import (
     ITEM_FOUNDATION_PILL,
@@ -16,8 +17,6 @@ from world_core import (
     LOC_XUANYUE_SECT,
     PLAYER_ID,
 )
-
-from world_server.app import create_app
 
 pytestmark = pytest.mark.integration
 
