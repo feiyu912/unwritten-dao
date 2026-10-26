@@ -3,6 +3,8 @@ from __future__ import annotations
 import uuid
 
 import pytest
+
+pytestmark = pytest.mark.integration
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from world_server.models import CommandLogRow, EventEdgeRow, WorldEventRow
