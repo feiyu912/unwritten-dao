@@ -363,3 +363,23 @@ def test_combat_death_blocks_further_actions() -> None:
             ),
         )
     assert error.value.code == "actor_dead"
+
+
+def test_genesis_belief_events_are_queryable_and_valid() -> None:
+    from world_core import genesis_events
+
+    state = create_world(42)
+    events = genesis_events(state)
+    assert len(events) == state.last_event_id == 7
+    assert [event.event_id for event in events] == list(range(1, 8))
+    for event in events:
+        EVENT_VALIDATOR.validate(event.model_dump(mode="json"))
+        assert event.type == "BELIEF_ACQUIRED"
+        assert event.command_id is None
+        assert event.causal_parent_ids == []
+    belief_sources = {
+        belief.source_event_id
+        for belief in state.beliefs.values()
+        if belief.source_event_id is not None
+    }
+    assert belief_sources == set(range(1, 8))

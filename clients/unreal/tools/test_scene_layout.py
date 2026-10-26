@@ -101,9 +101,7 @@ def test_all_npc_locations_exist(layout: dict[str, Any]) -> None:
         assert row["location_id"] in location_ids
 
 
-def test_adjacency_is_symmetric_and_matches_seed(
-    layout: dict[str, Any], seed_state: Any
-) -> None:
+def test_adjacency_is_symmetric_and_matches_seed(layout: dict[str, Any], seed_state: Any) -> None:
     adjacency = {row["location_id"]: row["adjacency"] for row in layout["locations"]}
     for location_id, neighbours in adjacency.items():
         assert neighbours == seed_state.locations[location_id].adjacency

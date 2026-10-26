@@ -145,10 +145,20 @@ def _forest_edge(foliage: bpy.types.Material, wood: bpy.types.Material) -> None:
     ]
     for index, (dx, dy, scale) in enumerate(offsets):
         x, y = ox + dx, oy + dy
-        _box(f"Tree_{index}_Trunk", (0.6 * scale, 0.6 * scale, 4 * scale), (x, y, 2 * scale),
-             collection, wood)
-        _box(f"Tree_{index}_Canopy", (5 * scale, 5 * scale, 5 * scale),
-             (x, y, 6 * scale), collection, foliage)
+        _box(
+            f"Tree_{index}_Trunk",
+            (0.6 * scale, 0.6 * scale, 4 * scale),
+            (x, y, 2 * scale),
+            collection,
+            wood,
+        )
+        _box(
+            f"Tree_{index}_Canopy",
+            (5 * scale, 5 * scale, 5 * scale),
+            (x, y, 6 * scale),
+            collection,
+            foliage,
+        )
 
 
 def _secret_realm_entrance(dark_rock: bpy.types.Material, stone: bpy.types.Material) -> None:
@@ -187,8 +197,7 @@ def main() -> None:
 
     bpy.context.scene.unit_settings.system = "METRIC"
     bpy.context.scene.unit_settings.scale_length = 1.0
-    print("blockout: created 4 collections (Courtyard, SectGate, ForestEdge, "
-          "SecretRealmEntrance)")
+    print("blockout: created 4 collections (Courtyard, SectGate, ForestEdge, SecretRealmEntrance)")
 
     argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     if "--save" in argv:

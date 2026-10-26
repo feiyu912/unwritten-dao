@@ -21,6 +21,7 @@ TARGET_EVENTS = 100_000
 @pytest.mark.slow
 def test_hundred_thousand_events_keep_invariants() -> None:
     state = create_world(42)
+    base_event_id = state.last_event_id
     a, b = LOC_STONE_TOWN, LOC_XUANYUE_SECT
     started = time.perf_counter()
     for index in range(TARGET_EVENTS):
@@ -31,7 +32,7 @@ def test_hundred_thousand_events_keep_invariants() -> None:
     elapsed = time.perf_counter() - started
 
     assert state.state_version == TARGET_EVENTS
-    assert state.last_event_id == state.npcs[PLAYER_ID].last_event_id + 1 or True
+    assert state.last_event_id == base_event_id + TARGET_EVENTS
     assert validate_state(state) == []
     checksum = state_checksum(state)
     assert checksum.startswith("sha256:")
