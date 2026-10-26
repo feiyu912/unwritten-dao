@@ -323,3 +323,25 @@ def test_dialogue_openai_misconfigured_returns_503(client: TestClient, monkeypat
         json={"npc_id": PROTAGONIST_ID, "player_id": PLAYER_ID, "message": "你好。"},
     )
     assert response.status_code == 503
+
+
+def test_websocket_streams_committed_events(client: TestClient) -> None:
+    snapshot = client.get("/v1/world/snapshot").json()
+    command = {
+        "schema_version": "world-command.v1",
+        "command_id": "33333333-3333-4333-8333-333333333333",
+        "idempotency_key": "api:ws:move",
+        "world_id": snapshot["world_id"],
+        "actor_id": PROTAGONIST_ID,
+        "issued_tick": snapshot["tick"],
+        "expected_state_version": snapshot["state_version"],
+        "type": "move",
+        "arguments": {"to_location_id": LOC_BLACKWOOD_FOREST},
+        "source": "player",
+    }
+    with client.websocket_connect("/v1/events/stream?after=0") as websocket:
+        response = client.post("/v1/commands", json=command)
+        assert response.status_code == 200
+        event = websocket.receive_json()
+    assert event["event_id"] == response.json()["events"][0]["event_id"]
+    assert event["type"] == "NPC_MOVED"

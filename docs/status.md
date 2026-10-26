@@ -19,6 +19,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | PostgreSQL persistence | 22 integration tests against real pgvector PostgreSQL 17 | verified |
 | Idempotency & concurrency | duplicate key returns stored result; stale version → 409; command_id reuse → 409 | verified |
 | Event log + causal query | `event_edge` persisted; `/v1/debug/causality/{id}` BFS | verified |
+| WebSocket stream | connected client receives a committed `NPC_MOVED` frame | verified |
 | Agent tiering | 6 major roles use the LLM path; others stay on UtilityPolicy | verified |
 | LLM proposal pipeline | strict JSON parsing, identity binding, one repair, audit rows, replay mode | verified with mock |
 | Episodic memory | events → `memory_episode` in the command transaction; top-5 retrieval into prompt | verified |
