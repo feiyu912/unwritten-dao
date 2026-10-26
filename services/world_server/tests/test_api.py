@@ -12,7 +12,6 @@ from world_core import (
     PROTAGONIST_ID,
 )
 
-
 pytestmark = pytest.mark.integration
 
 
