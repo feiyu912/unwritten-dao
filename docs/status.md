@@ -14,6 +14,8 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Stolen-map causal intervention | `tests/e2e/test_causal_intervention.py` + `make demo`; baseline discovers the realm, intervention never does | verified |
 | 100k-event invariants | `tests/e2e/test_event_stress.py` (slow): **1.18 s**, 84.6k events/s, invariants hold | verified |
 | Snapshot / save-load | core round-trip + server time-travel test; replay checksum identical | verified |
+| 20-year persisted history | `tools/bench_db.py`: **8.72 s**, 1707 events, 600 memories, state valid | verified |
+| Database size target | same run: **18.2 MB** total (< 1 GB) | verified (cultivation-only history) |
 | PostgreSQL persistence | 22 integration tests against real pgvector PostgreSQL 17 | verified |
 | Idempotency & concurrency | duplicate key returns stored result; stale version → 409; command_id reuse → 409 | verified |
 | Event log + causal query | `event_edge` persisted; `/v1/debug/causality/{id}` BFS | verified |
@@ -43,8 +45,8 @@ excluded from the fast suite).
 5. **Causal coverage** — instrumented via `tools/report_history.py`; the 400-day run shows 100%
    coverage on important events, but provenance is "the actor's previous event" (linear).
    Multi-cause links and subjective meaningfulness are not modeled.
-6. **Database size under 20 years** — the 20-year benchmark runs in memory; no sustained
-   repository-driven 20-year run or 1 GB database measurement.
+6. **Database size** — measured at 18.2 MB for a cultivation-only 20-year history. A full
+   agent-driven history with more movable/combat events would be larger; still far under 1 GB.
 7. **Multi-user / auth / process recovery** — single world, single process, no authentication.
 
 ## Next R3 work

@@ -22,3 +22,6 @@ db-down:
 
 demo:
 	uv run python -m tools.demo_causal --days 400
+
+bench-db:
+	uv run python -m tools.bench_db --reset --years 20
