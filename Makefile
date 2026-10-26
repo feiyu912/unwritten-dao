@@ -25,3 +25,6 @@ demo:
 
 bench-db:
 	uv run python -m tools.bench_db --reset --years 20
+
+report:
+	uv run python -m tools.narrative_report --years 20 --seed 42

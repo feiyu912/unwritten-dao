@@ -14,6 +14,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Stolen-map causal intervention | `tests/e2e/test_causal_intervention.py` + `make demo`; baseline discovers the realm, intervention never does | verified |
 | 100k-event invariants | `tests/e2e/test_event_stress.py` (slow): **1.18 s**, 84.6k events/s, invariants hold | verified |
 | Snapshot / save-load | core round-trip + server time-travel test; replay checksum identical | verified |
+| 20-year agent history | `tools/narrative_report.py`: **1.9 s**, protagonist reaches realm 2, causal chains + faction outcomes | verified |
 | 20-year persisted history | `tools/bench_db.py`: **8.72 s**, 1707 events, 600 memories, state valid | verified |
 | Database size target | same run: **18.2 MB** total (< 1 GB) | verified (cultivation-only history) |
 | PostgreSQL persistence | 22 integration tests against real pgvector PostgreSQL 17 | verified |
