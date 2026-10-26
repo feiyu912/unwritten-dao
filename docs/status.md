@@ -24,7 +24,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | WebSocket stream | connected client receives a committed `NPC_MOVED` frame | verified |
 | API contract conformance | every OpenAPI operation implemented; live snapshot/event/observation/decision responses validate JSON Schemas | verified |
 | Agent tiering | 6 major roles use the LLM path; others stay on UtilityPolicy | verified |
-| LLM proposal pipeline | strict JSON parsing, identity binding, one repair, audit rows, replay mode | verified with mock |
+| LLM proposal pipeline | strict JSON parsing, identity binding, one repair, audit rows, replay mode; simulator rejection triggers one Utility fallback | verified with mock |
 | Episodic memory | events → `memory_episode` in the command transaction; top-5 retrieval into prompt | verified |
 | Memory recall gate | labeled Recall@5 = 10/10 in `tests/e2e/test_memory_recall.py` | verified (small set) |
 | Dialogue | mock/OpenAI-compatible modes; deterministic fallback; no hidden facts | verified with mock |

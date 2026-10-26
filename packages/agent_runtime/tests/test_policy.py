@@ -139,3 +139,30 @@ def test_stale_proposal_is_rejected_before_simulation() -> None:
     with pytest.raises(ProposalRejected) as error:
         proposal_to_command(state, proposal)
     assert error.value.code == "stale_proposal"
+
+
+class _ImpossiblePlanPolicy:
+    def decide(self, observation):  # type: ignore[no-untyped-def]
+        return ActionProposal(
+            proposal_id="00000000-0000-4000-8000-000000000009",
+            decision_id="impossible-claim",
+            npc_id=observation.npc_id,
+            observed_world_version=observation.world_version,
+            intent="claim_opportunity",
+            arguments={"opportunity_id": "opportunity_that_does_not_exist"},
+            valid_for_ticks=7,
+            memory_refs=[],
+            rationale_short="claim a hallucinated opportunity",
+            confidence=0.9,
+        )
+
+
+def test_simulator_rejection_falls_back_to_utility() -> None:
+    from agent_runtime import decide_and_apply
+
+    state = create_world(42)
+    result = decide_and_apply(state, PROTAGONIST_ID, _ImpossiblePlanPolicy())
+    assert result is not None
+    assert result.state_version >= 1
+    assert state.npcs[PROTAGONIST_ID].location_id == "location_blackwood_forest"
+    assert validate_state(state) == []

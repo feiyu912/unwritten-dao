@@ -48,7 +48,12 @@ from agent_runtime.observation import build_observation
 from agent_runtime.policy import UtilityPolicy
 from agent_runtime.prompt import build_planning_prompt, repair_prompt
 from agent_runtime.providers import OpenAICompatibleProvider, ProviderError
-from agent_runtime.validator import ProposalRejected, decide_command, proposal_to_command
+from agent_runtime.validator import (
+    ProposalRejected,
+    decide_and_apply,
+    decide_command,
+    proposal_to_command,
+)
 
 __all__ = [
     "ActionProposal",
@@ -87,6 +92,7 @@ __all__ = [
     "build_observation",
     "build_planning_prompt",
     "cosine",
+    "decide_and_apply",
     "decide_command",
     "parse_proposal",
     "proposal_to_command",

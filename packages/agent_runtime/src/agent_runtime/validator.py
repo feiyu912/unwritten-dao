@@ -13,7 +13,7 @@ import uuid
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from world_core.commands import WorldCommand, make_command
+from world_core.commands import CommandResult, WorldCommand, make_command
 from world_core.models import WorldState
 
 from agent_runtime.models import (
@@ -23,6 +23,8 @@ from agent_runtime.models import (
     NpcObservation,
 )
 from agent_runtime.observation import build_observation
+from agent_runtime.policy import UtilityPolicy
+from world_core import CommandRejected, apply_command
 
 _ID_NAMESPACE = uuid.UUID("2d3f7e6a-9b41-4c58-8f0d-6a1e5c7b9d20")
 
@@ -92,9 +94,6 @@ def decide_command(
 
 
 def _default_fallback() -> AgentPolicy:
-    # Imported lazily so the observation layer stays usable without the policy.
-    from agent_runtime.policy import UtilityPolicy
-
     return UtilityPolicy()
 
 
@@ -131,8 +130,54 @@ def _idempotency_key(state: WorldState, proposal: ActionProposal) -> str:
     return key[:128]
 
 
+def decide_and_apply(
+    state: WorldState,
+    npc_id: str,
+    policy: AgentPolicy,
+    *,
+    fallback: AgentPolicy | None = None,
+    memories: Sequence[Mapping[str, Any]] = (),
+    recent_events: Sequence[Mapping[str, Any]] = (),
+) -> CommandResult | None:
+    """Decide, apply through the simulator, and fall back once if it rejects.
+
+    This is the full safety chain: proposal validation catches stale/identity
+    errors, and the simulator catches impossible plans. The fallback is always
+    the deterministic UtilityPolicy.
+    """
+    command = decide_command(
+        state,
+        npc_id,
+        policy,
+        memories=memories,
+        recent_events=recent_events,
+    )
+    if command is None:
+        return None
+    try:
+        return apply_command(state, command)
+    except CommandRejected as first_error:
+        fallback_policy = fallback if fallback is not None else _default_fallback()
+        fallback_command = decide_command(
+            state,
+            npc_id,
+            fallback_policy,
+            memories=memories,
+            recent_events=recent_events,
+        )
+        if fallback_command is None:
+            raise
+        try:
+            return apply_command(state, fallback_command)
+        except CommandRejected as second_error:
+            raise RuntimeError(
+                f"fallback command rejected after {first_error.code}: {second_error.code}"
+            ) from second_error
+
+
 __all__ = [
     "ProposalRejected",
+    "decide_and_apply",
     "decide_command",
     "proposal_to_command",
 ]

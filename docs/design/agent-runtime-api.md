@@ -64,6 +64,14 @@ decide_command(
   (`UtilityPolicy` by default) exactly once; if that also fails, raise.
 - Never call a provider directly; `LLMPolicy` composes an `InferenceProvider`.
 
+```python
+decide_and_apply(state, npc_id, policy, *, fallback=None, memories=(), recent_events=())
+    -> CommandResult | None
+```
+- Full safety chain: validate the proposal, apply through the simulator, and if the
+  simulator rejects it (impossible plan), call the deterministic UtilityPolicy exactly once
+  and apply that. Raises if the fallback is also rejected.
+
 ## UtilityPolicy behavior (R1)
 
 Deterministic, no randomness. Stable key order. For an NPC whose active goal is
