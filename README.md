@@ -7,8 +7,9 @@ models only propose actions.
 **Status:** R1 complete; R2 headless agent stack complete (LLM proposal pipeline, episodic
 memory, dialogue, audit/replay); R3 playable headless demo available. The UE5 client is an
 unvalidated scaffold; 3D/FPS work awaits a machine with Unreal. See
-[`docs/status.md`](docs/status.md) for the evidence table and [`docs/runbook.md`](docs/runbook.md)
-for local, CI, and GPU-machine procedures.
+[`docs/status.md`](docs/status.md) for the evidence table, [`docs/acceptance.md`](docs/acceptance.md)
+for the plan's acceptance checklist, and [`docs/runbook.md`](docs/runbook.md) for local, CI,
+and GPU-machine procedures.
 
 ## Architecture in one paragraph
 
