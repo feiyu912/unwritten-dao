@@ -102,7 +102,8 @@ masked; all-illegal/model-error cases fall back to `UtilityPolicy` once. It neve
 `UtilityCandidateGenerator` is the baseline candidate source; `UtilityScoringModel` is a
 reference scorer that selects the utility candidate and exists to exercise the interface before a
 trained action scorer exists. Future BC/RL models implement the same protocol without changing
-policies or the simulator. `tools.collect_decisions --policy decision-model` records this path.
+policies or the simulator. `tools.collect_decisions --policy decision-model` records this path; the server exposes it as
+`AGENT_PROVIDER=decision-model` and persists the candidate/mask sample in `agent_decision.sample`.
 
 ## Decision dataset
 

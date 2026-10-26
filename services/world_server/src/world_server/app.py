@@ -19,6 +19,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from agent_runtime import (
+    DecisionModelPolicy,
     DecisionRecord,
     LLMPolicy,
     NpcObservation,
@@ -45,6 +46,7 @@ from world_server.repository import (
     load_snapshot,
     load_state,
     save_decisions,
+    save_policy_decisions,
     save_snapshot,
 )
 from world_server.summaries import summarize_event
@@ -172,6 +174,13 @@ def create_app() -> FastAPI:
         started = time.perf_counter()
         try:
             proposal = selection.policy.decide(observation)
+            if isinstance(selection.policy, DecisionModelPolicy):
+                save_policy_decisions(
+                    session,
+                    world_id=state.world_id,
+                    records=list(selection.policy.records),
+                )
+                return proposal.model_dump(mode="json")
             records = (
                 list(selection.policy.records)
                 if isinstance(selection.policy, LLMPolicy)

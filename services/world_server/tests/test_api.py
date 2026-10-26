@@ -405,3 +405,23 @@ def test_event_pagination_and_websocket_resume(client: TestClient) -> None:
     with client.websocket_connect(f"/v1/events/stream?after={first['event_id']}") as websocket:
         resumed = websocket.receive_json()
     assert resumed["event_id"] == second["event_id"]
+
+
+def test_decision_model_mode_persists_candidates(
+    client: TestClient, session: Any, monkeypatch: Any
+) -> None:
+    import json
+
+    from world_server.repository import list_decisions
+
+    monkeypatch.setenv("AGENT_PROVIDER", "decision-model")
+    response = _decision(client, PROTAGONIST_ID)
+    assert response.status_code == 200
+    rows = list_decisions(session, npc_id=PROTAGONIST_ID, accepted_only=True)
+    assert rows
+    row = rows[-1]
+    assert row.provider == "utility-scoring"
+    assert row.sample is not None
+    assert row.sample["candidates"]
+    assert row.sample["legal_intents"]
+    assert "location_ancient_cave" not in json.dumps(row.sample["observation"])

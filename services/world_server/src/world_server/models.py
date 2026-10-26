@@ -195,6 +195,7 @@ class AgentDecisionRow(Base):
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     latency_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     proposal: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    sample: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), default=_utcnow
     )

@@ -30,7 +30,7 @@ SQLite; JSONB semantics and `CREATE EXTENSION vector` are part of the schema con
 
 | Env | Values | Meaning |
 |---|---|---|
-| `AGENT_PROVIDER` | `utility` (default), `llm-mock`, `openai`, `replay` | decision policy for the six major roles |
+| `AGENT_PROVIDER` | `utility` (default), `llm-mock`, `openai`, `replay`, `decision-model` | decision policy for the six major roles; `decision-model` stores candidate/mask samples |
 | `LLM_BASE_URL` / `LLM_MODEL` / `LLM_API_KEY` | — | required for `openai` |
 | `EMBEDDING_PROVIDER` | `off` (default), `hash`, `openai` | memory vector indexing; `hash` is for offline plumbing tests |
 | `EMBEDDING_BASE_URL` / `EMBEDDING_MODEL` / `EMBEDDING_API_KEY` | — | required for `openai` embeddings (dimension must be 768) |

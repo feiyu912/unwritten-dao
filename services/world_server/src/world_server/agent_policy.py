@@ -14,11 +14,13 @@ from world_core.models import Npc
 
 from agent_runtime import (
     AgentPolicy,
+    DecisionModelPolicy,
     LLMPolicy,
     MockInferenceProvider,
     OpenAICompatibleProvider,
     RivalryPolicy,
     UtilityPolicy,
+    UtilityScoringModel,
 )
 
 MAJOR_ROLES = frozenset(
@@ -61,6 +63,11 @@ def build_policy() -> PolicySelection:
         return PolicySelection(
             "llm-mock",
             LLMPolicy(MockInferenceProvider(reply=reply), model_version="mock-v1"),
+        )
+    if mode in {"decision-model", "decision_model"}:
+        return PolicySelection(
+            "decision-model",
+            DecisionModelPolicy(UtilityScoringModel(), name="utility-scoring"),
         )
     if mode == "openai":
         base_url = os.environ.get("LLM_BASE_URL")

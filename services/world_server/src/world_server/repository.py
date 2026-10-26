@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 from world_core.commands import CommandResult
 from world_core.events import WorldEvent
 
-from agent_runtime import ActionProposal, DecisionRecord
+from agent_runtime import ActionProposal, DecisionRecord, PolicyDecisionRecord
 from world_core import CommandRejected, WorldCommand, WorldState, state_checksum
 from world_core import apply_command as core_apply
 from world_core import create_world as core_create_world
@@ -387,6 +387,37 @@ def save_decisions(
                 error=record.error,
                 latency_ms=record.latency_ms,
                 proposal=payload,
+            )
+        )
+    session.commit()
+
+
+def save_policy_decisions(
+    session: Session,
+    *,
+    world_id: str,
+    records: list[PolicyDecisionRecord],
+) -> None:
+    """Persist DecisionModelPolicy records with their candidate/mask payload."""
+    for record in records:
+        session.add(
+            AgentDecisionRow(
+                world_id=uuid.UUID(world_id),
+                decision_id=record.decision_id,
+                npc_id=uuid.UUID(record.npc_id),
+                tick=record.tick,
+                world_version=record.world_version,
+                provider=record.policy_name,
+                model_version="rules-v1",
+                system_prompt="",
+                user_prompt="",
+                raw_response=None,
+                attempts=1,
+                accepted=not record.fallback_used,
+                error="fallback" if record.fallback_used else None,
+                latency_ms=0.0,
+                proposal=None,
+                sample=asdict(record),
             )
         )
     session.commit()
