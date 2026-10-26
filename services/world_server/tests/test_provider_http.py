@@ -8,15 +8,6 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
-
-from world_core import (
-    ITEM_MAP_FRAGMENT,
-    LOC_BLACKWOOD_FOREST,
-    LOC_MISTY_VALLEY,
-    LOC_RUINED_TEMPLE,
-    PROTAGONIST_ID,
-    make_command,
-)
 from world_server.app import create_app
 from world_server.models import MemoryEpisodeRow
 from world_server.repository import (
@@ -26,11 +17,20 @@ from world_server.repository import (
     load_state,
 )
 
+from world_core import (
+    ITEM_MAP_FRAGMENT,
+    LOC_BLACKWOOD_FOREST,
+    LOC_MISTY_VALLEY,
+    LOC_RUINED_TEMPLE,
+    PROTAGONIST_ID,
+    make_command,
+)
+
 pytestmark = pytest.mark.integration
 
 
 class _StubHandler(BaseHTTPRequestHandler):
-    def do_POST(self) -> None:  # noqa: N802
+    def do_POST(self) -> None:
         length = int(self.headers.get("Content-Length", "0"))
         body = json.loads(self.rfile.read(length) or b"{}")
         if self.path.endswith("/chat/completions"):
@@ -139,9 +139,7 @@ def test_embedding_provider_writes_and_queries_pgvector(
         )
 
     rows = (
-        session.execute(
-            select(MemoryEpisodeRow).where(MemoryEpisodeRow.npc_id == actor.npc_id)
-        )
+        session.execute(select(MemoryEpisodeRow).where(MemoryEpisodeRow.npc_id == actor.npc_id))
         .scalars()
         .all()
     )
