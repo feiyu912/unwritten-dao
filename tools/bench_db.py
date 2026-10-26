@@ -12,17 +12,15 @@ import argparse
 import time
 
 from sqlalchemy import func, select, text
-
-from world_core import make_command, state_checksum, validate_state
-
 from world_server.db import get_engine, get_session_factory
 from world_server.models import (
     AgentDecisionRow,
     MemoryEpisodeRow,
     WorldEventRow,
-    WorldStateRow,
 )
 from world_server.repository import apply_command, bootstrap, load_state
+
+from world_core import make_command, state_checksum, validate_state
 
 
 def _truncate(session) -> None:
