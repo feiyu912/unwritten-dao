@@ -19,3 +19,6 @@ db-up:
 
 db-down:
 	docker compose down
+
+demo:
+	uv run python -m tools.demo_causal --days 400

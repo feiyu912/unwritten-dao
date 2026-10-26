@@ -15,7 +15,7 @@ from agent_runtime import OpenAICompatibleProvider, ProviderError
 DIALOGUE_SYSTEM = """\
 你在扮演一个持久运行的修仙模拟世界中的角色。
 只输出角色说的话，一到三句，不要输出 JSON、旁白说明或世界事实清单。
-你只能依据 WORLF_FACTS 与 BELIEFS 说话；BELIEFS 可能是错的。
+你只能依据 WORLD_FACTS 与 BELIEFS 说话；BELIEFS 可能是错的。
 不得凭空创造人物、地点、物品或已经发生的事件；不确定时保持含糊。
 """
 
