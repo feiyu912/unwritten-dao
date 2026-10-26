@@ -38,6 +38,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Cross-process determinism | same benchmark checksum under `PYTHONHASHSEED=0` and `1` | verified |
 | CI | macOS ARM64, Ubuntu x86_64, PostgreSQL integration all green | verified |
 | Real-process HTTP | uvicorn + httpx: snapshot (30 NPCs), observation (3 memories), decision, dialogue fallback, idempotent 200, stale 409 | verified |
+| HTTP playthrough | player-only commands complete map → realm → pill; causality chain and observation memories verified | verified |
 | Static gates | `ruff check .` clean; `mypy` clean on 32 source files | verified |
 
 Test totals: **71 fast + 22 integration + 1 slow** (the slow 100k-event test is run manually and
