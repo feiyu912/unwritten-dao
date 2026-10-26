@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fast, database-free suite. Results are labeled by OS/arch so a macOS ARM64
+  # checksum drift is distinguishable from a Linux x86_64 one in the checks UI
+  # and in the job summary.
+  test:
+    name: test (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            label: macOS 14 / ARM64
+          - os: ubuntu-24.04
+            label: Ubuntu 24.04 / x86_64
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv and Python 3.12
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync workspace
+        run: uv sync --all-packages
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Unit tests
+        run: uv run pytest -m "not integration and not slow" -q
+
+      - name: Record result label
+        if: always()
+        run: |
+          echo "### Test results: ${{ matrix.label }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Runner: ${{ runner.os }} / ${{ runner.arch }}" >> "$GITHUB_STEP_SUMMARY"
+
+  # PostgreSQL-backed tests. Some markers may collect zero tests until the
+  # persistence module lands; a zero-collection exit code is intentionally not
+  # masked, so the job starts green only once at least one integration test
+  # exists and passes.
+  integration:
+    name: integration (Ubuntu 24.04 / x86_64)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: .
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: unwritten_dao_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d unwritten_dao_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+          --health-start-period 10s
+    env:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/unwritten_dao_test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv and Python 3.12
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync workspace
+        run: uv sync --all-packages
+
+      - name: Integration tests
+        run: uv run pytest -m integration -q
+
+      - name: Record result label
+        if: always()
+        run: |
+          echo "### Integration results: Ubuntu 24.04 / x86_64 (PostgreSQL 17 + pgvector)" >> "$GITHUB_STEP_SUMMARY"
