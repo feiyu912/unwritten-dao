@@ -11,7 +11,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Deterministic 30-NPC world | `world_core`; 8 core tests; same seed/commands → identical checksums | verified |
 | 20-year headless run | `uv run python -m tools.bench_sim --npcs 30 --years 20 --seed 42` → **0.06 s**, 569 events, state valid | verified |
 | 100/100 replay | `tests/e2e/test_replay.py` (100 runs, identical checksums and event counts) | verified |
-| Stolen-map causal intervention | `tests/e2e/test_causal_intervention.py` + `make demo`; baseline discovers the realm, intervention never does | verified |
+| Stolen-map causal intervention | 400-day test + **20-year run**: baseline reaches realm 2 and claims the pill; intervention stays realm 1, never discovers the realm, checksums differ | verified |
 | 100k-event invariants | `tests/e2e/test_event_stress.py` (slow): **1.18 s**, 84.6k events/s, invariants hold | verified |
 | Snapshot / save-load | core round-trip + server time-travel test; replay checksum identical | verified |
 | 20-year agent history | `tools/narrative_report.py`: **1.9 s**, protagonist reaches realm 2, causal chains + faction outcomes | verified |

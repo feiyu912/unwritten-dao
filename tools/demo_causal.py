@@ -92,13 +92,17 @@ def run(*, days: int, steal: bool) -> Timeline:
     timeline = Timeline()
     if steal:
         _steal_map(state)
+    policy = UtilityPolicy()
     for _ in range(days):
-        command = decide_command(state, PROTAGONIST_ID, UtilityPolicy())
-        if command is not None:
-            timeline.add(state, apply_command(state, command).events)
+        for npc in sorted(state.npcs.values(), key=lambda item: item.npc_id):
+            if npc.npc_id == PLAYER_ID or not npc.alive:
+                continue
+            command = decide_command(state, npc.npc_id, policy)
+            if command is not None:
+                timeline.add(state, apply_command(state, command).events)
         result = advance_time(state, 1)
         timeline.add(state, result.events)
-        if state.npcs[PROTAGONIST_ID].realm >= 2 or not state.npcs[PROTAGONIST_ID].alive:
+        if not state.npcs[PROTAGONIST_ID].alive:
             break
     protagonist = state.npcs[PROTAGONIST_ID]
     timeline.checksum = state_checksum(state)
