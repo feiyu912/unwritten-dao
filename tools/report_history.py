@@ -63,12 +63,20 @@ def run(*, days: int, seed: int) -> dict[str, object]:
         next(npc.npc_id for npc in state.npcs.values() if npc.canonical_role == "protagonist")
     ]
     coverage = (covered / important) if important else 1.0
+    goal_counts: dict[str, int] = {}
+    for npc in state.npcs.values():
+        for goal in npc.goals:
+            goal_counts[goal.status] = goal_counts.get(goal.status, 0) + 1
+    resolved = sum(goal_counts.get(status, 0) for status in ("achieved", "failed", "abandoned"))
+    persistence = (goal_counts.get("achieved", 0) / resolved) if resolved else None
     return {
         "tick": state.tick,
         "important_events": important,
         "covered_events": covered,
         "coverage": round(coverage, 4),
         "goals": [(goal.kind, goal.status) for goal in protagonist.goals],
+        "goal_counts": goal_counts,
+        "resolved_goal_persistence": persistence,
         "protagonist_alive": protagonist.alive,
         "protagonist_realm": protagonist.realm,
         "checksum": state_checksum(state),
