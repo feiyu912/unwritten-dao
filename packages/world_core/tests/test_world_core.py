@@ -8,12 +8,14 @@ import pytest
 from jsonschema import Draft202012Validator, FormatChecker
 
 from world_core import (
+    FACTION_XUANYUE,
     ITEM_FOUNDATION_PILL,
     ITEM_MAP_FRAGMENT,
     LOC_ANCIENT_CAVE,
     LOC_BLACKWOOD_FOREST,
     LOC_MISTY_VALLEY,
     LOC_RUINED_TEMPLE,
+    LOC_STONE_TOWN,
     OPP_FOUNDATION_PILL,
     PLAYER_ID,
     PROTAGONIST_ID,
@@ -264,3 +266,56 @@ def test_attack_requires_co_location() -> None:
             ),
         )
     assert error.value.code == "target_not_present"
+
+
+def test_faction_economy_settles_every_thirty_days() -> None:
+    state = create_world(42)
+    faction = state.factions[FACTION_XUANYUE]
+    before = faction.treasury
+    members = sum(1 for npc in state.npcs.values() if npc.faction_id == FACTION_XUANYUE)
+    advance_time(state, 30)
+    expected = before + faction.income_per_30d - faction.upkeep_per_member * members
+    assert faction.treasury == expected
+
+
+def test_natural_death_clears_action_and_blocks_commands() -> None:
+    from world_core.worldgen import npc_id
+
+    state = create_world(42)
+    victim = state.npcs[npc_id("a_he")]
+    victim.birth_tick = -victim.lifespan_ticks + 1
+    apply_command(
+        state,
+        make_command(state, victim.npc_id, "start_cultivation", {"days": 30}, source="test"),
+    )
+    result = advance_time(state, 1)
+    assert any(event.type == "NPC_DIED" for event in result.events)
+    assert victim.alive is False
+    assert victim.active_action is None
+    assert validate_state(state) == []
+
+    with pytest.raises(CommandRejected) as error:
+        apply_command(
+            state,
+            make_command(
+                state,
+                victim.npc_id,
+                "move",
+                {"to_location_id": LOC_STONE_TOWN},
+                source="test",
+            ),
+        )
+    assert error.value.code == "actor_dead"
+
+
+def test_secret_realm_closes_and_opportunity_expires() -> None:
+    state = create_world(42)
+    events = advance_time(state, 3650).events + advance_time(state, 1826).events
+    realm = state.secret_realms[REALM_ANCIENT_CAVE]
+    opportunity = state.opportunities[OPP_FOUNDATION_PILL]
+    assert realm.opened is False
+    assert opportunity.expired is True
+    types = [event.type for event in events]
+    assert "SECRET_REALM_CLOSED" in types
+    assert "OPPORTUNITY_EXPIRED" in types
+    assert validate_state(state) == []

@@ -13,6 +13,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | 100/100 replay | `tests/e2e/test_replay.py` (100 runs, identical checksums and event counts) | verified |
 | Stolen-map causal intervention | 400-day test + **20-year run**: baseline reaches realm 2 and claims the pill; intervention stays realm 1, never discovers the realm, checksums differ | verified |
 | 100k-event invariants | `tests/e2e/test_event_stress.py` (slow): **1.18 s**, 84.6k events/s, invariants hold | verified |
+| Rule coverage | faction economy, natural death clearing actions, realm/opportunity expiry directly tested | verified |
 | Snapshot / save-load | core round-trip + server time-travel test; replay checksum identical | verified |
 | 20-year agent history | `tools/narrative_report.py`: **1.9 s**, protagonist reaches realm 2, causal chains + faction outcomes | verified |
 | 20-year persisted history | `tools/bench_db.py`: **8.72 s**, 1707 events, 600 memories, state valid | verified |
