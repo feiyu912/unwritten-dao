@@ -35,7 +35,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Pluggable decision model | DecisionModelPolicy + scoring/value protocols + legal mask + JSON decision records; no training | verified |
 | Decision dataset | `tools/collect_decisions.py --policy utility|rivalry|llm-mock|decision-model`: observation/goals/actions/choice/outcome/event ids; 30 samples / 2 days, all accepted | verified |
 | Decision trajectory summary | `tools.decision_quality.py` on `decision-sample.v1` JSONL: acceptance, rejections, action diversity, goal/confidence/event coverage, invalid choices; 37/37 accepted on a 10-day utility run | verified |
-| Ending report | `tools.ending_report.py` derives `ending-report.v1` from real events (pill fate, ancient cave, feuds) with cited event ids; 1-year seed 42 = `pill_ascension` + `realm_found`; stealing the map at tick 0 flips it to `pill_dormant` + `realm_sealed` | verified |
+| Ending report | `tools.ending_report.py` derives `ending-report.v1` from real events (pill fate, ancient cave, feuds) with cited event ids; 1-year seed 42 = `pill_ascension` + `realm_found`; stealing the map at tick 0 flips it to `pill_dormant` + `realm_sealed`; a real revenge death pair yields `blood_feud_open` then `blood_feud_resolved` | verified |
 | Canonical past | 7 seeded beliefs become queryable `BELIEF_ACQUIRED` events (ids 1..7); transfers can cite them | verified |
 | Server decision-model mode | `AGENT_PROVIDER=decision-model` returns a proposal and stores candidate/score/mask sample (migration 0004) | verified |
 | Goal evolution | revenge after a killer's act, defeat_rival completion, persistent goals across 200+ ticks; revenge drives a lethal attack when the target is visible | verified |

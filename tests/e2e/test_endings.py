@@ -8,12 +8,18 @@ from world_core import (
     LOC_RUINED_TEMPLE,
     LOC_XUANYUE_SECT,
     PLAYER_ID,
+    PROTAGONIST_ID,
+    Relationship,
+    WorldEvent,
     WorldState,
+    advance_time,
     apply_command,
     create_world,
     evaluate_endings,
     genesis_events,
     make_command,
+    npc_id,
+    relationship_key,
     state_checksum,
 )
 
@@ -70,6 +76,71 @@ def test_endings_are_traceable_and_read_only() -> None:
     assert set(report["evidence_event_ids"]) <= known
     for ending in report["endings"]:
         assert set(ending["evidence_event_ids"]) <= known
+
+
+def _kill(
+    state: WorldState, attacker_id: str, target_id: str, events: list[WorldEvent]
+) -> None:
+    for _ in range(20):
+        if not state.npcs[target_id].alive:
+            return
+        assert state.npcs[attacker_id].alive, f"{attacker_id} died before {target_id}"
+        result = apply_command(
+            state,
+            make_command(
+                state,
+                attacker_id,
+                "attack",
+                {"target_id": target_id, "intent": "kill"},
+                source="test",
+            ),
+        )
+        events.extend(result.events)
+    raise AssertionError(f"{target_id} survived 20 kill attempts")
+
+
+def test_revenge_ending_opens_then_resolves() -> None:
+    state = create_world(42)
+    killer = state.npcs[npc_id("lu_xuanji")]
+    victim = state.npcs[npc_id("a_he")]
+    survivor = state.npcs[npc_id("su_zhi")]
+    healer = state.npcs[PROTAGONIST_ID]
+    victim.location_id = LOC_XUANYUE_SECT
+    victim.health = 0.01
+    healer.location_id = LOC_XUANYUE_SECT
+    healer.realm = 6
+    healer.stage = 4
+    healer.foundation = 1.0
+    healer.health = 1.0
+    state.relationships[relationship_key(survivor.npc_id, victim.npc_id)] = Relationship(
+        source_npc_id=survivor.npc_id,
+        target_npc_id=victim.npc_id,
+        affinity=25,
+    )
+    events: list[WorldEvent] = []
+
+    _kill(state, killer.npc_id, victim.npc_id, events)
+    opened = {
+        ending["ending_id"] for ending in evaluate_endings(state, events)["endings"]
+    }
+    assert "blood_feud_open" in opened
+
+    _kill(state, healer.npc_id, killer.npc_id, events)
+    events.extend(advance_time(state, 1).events)
+    report = evaluate_endings(state, events)
+    ids = {ending["ending_id"] for ending in report["endings"]}
+
+    assert "blood_feud_resolved" in ids
+    resolved = next(e for e in report["endings"] if e["ending_id"] == "blood_feud_resolved")
+    assert resolved["evidence_event_ids"]
+    assert set(resolved["evidence_event_ids"]) <= {event.event_id for event in events}
+    killer_deaths = {
+        event.event_id
+        for event in events
+        if event.type == "NPC_DIED" and killer.npc_id in event.actor_ids
+    }
+    assert killer_deaths
+    assert killer_deaths <= set(resolved["evidence_event_ids"])
 
 
 def test_stealing_the_map_changes_the_ending() -> None:

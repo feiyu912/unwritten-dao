@@ -73,6 +73,8 @@ evidence exists yet.
   same seed/horizon to `pill_dormant` + `realm_sealed`.
 - Endings are read-only: `evaluate_endings` leaves the state checksum unchanged, and every
   evidence id is present in the supplied event log.
+- Revenge branch from real events: a witnessed death opens `blood_feud_open`, and after the
+  killer dies the next tick turns it into `blood_feud_resolved` citing both death events.
 
 ## How to reproduce the PASS rows
 
