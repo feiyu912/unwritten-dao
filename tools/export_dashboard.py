@@ -20,7 +20,7 @@ from world_server.summaries import summarize_event
 
 from agent_runtime import find_story_threads
 from tools.character_history import character_timeline, find_npc, simulate
-from world_core import state_checksum, validate_state
+from world_core import evaluate_endings, state_checksum, validate_state
 
 POSITIONS = {
     "location_stone_town": (110, 320),
@@ -189,6 +189,26 @@ def _thread_summary(state, event) -> str:
     return summarize_event(event.type, event.payload, state)
 
 
+def _endings(state, events) -> str:
+    report = evaluate_endings(state, events)
+    item = report["key_item"]
+    rows = []
+    for ending in report["endings"]:
+        evidence = ", ".join(str(event_id) for event_id in ending["evidence_event_ids"]) or "—"
+        rows.append(
+            f'<li><strong class="ev">{_esc(ending["ending_id"])}</strong> · '
+            f'{_esc(ending["summary"])} '
+            f'<span class="meta">evidence: {_esc(evidence)}</span></li>'
+        )
+    holder = _esc(item["holder_name"] or "无主")
+    consumed = _esc(item["consumed_by"] or "—")
+    return (
+        f'<p class="sub">关键物：{_esc(item["name"] or item["item_id"])} · '
+        f"持有：{holder} · 服用：{consumed}</p>"
+        f'<ol>{"".join(rows)}</ol>'
+    )
+
+
 def build_dashboard(state, events, *, years: int, seed: int) -> str:
     protagonist = find_npc(state, "protagonist")
     life = character_timeline(state, events, protagonist.npc_id)[:12] if protagonist else []
@@ -235,6 +255,7 @@ ol {{ padding-left: 22px; }} li {{ margin: 5px 0; }}
 <p class="sub">目标：{_esc(goal_text)}</p>
 </div></div>
 <h2>主要人物</h2><div class="card">{_characters(state)}</div>
+<h2>世界结局（真实事件）</h2><div class="card">{_endings(state, events)}</div>
 <h2>重要事件与因果父事件</h2><div class="card">{_timeline(state, events)}</div>
 <h2>故事线（真实因果链）</h2><div class="card">{_threads(state, events)}</div>
 <h2>主角人生节点</h2><div class="card"><ol>

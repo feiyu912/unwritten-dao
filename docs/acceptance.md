@@ -75,6 +75,8 @@ evidence exists yet.
   evidence id is present in the supplied event log.
 - Revenge branch from real events: a witnessed death opens `blood_feud_open`, and after the
   killer dies the next tick turns it into `blood_feud_resolved` citing both death events.
+- The dashboard (`export_dashboard`, both simulation and `--from-db`) renders a "世界结局" section;
+  the persisted 1-year world shows `pill_ascension` and `realm_found` with evidence ids.
 
 ## How to reproduce the PASS rows
 
