@@ -5,6 +5,7 @@ from tools.ending_report import simulate
 from world_core import (
     ITEM_MAP_FRAGMENT,
     LOC_BLACKWOOD_FOREST,
+    LOC_MISTY_VALLEY,
     LOC_RUINED_TEMPLE,
     LOC_XUANYUE_SECT,
     PLAYER_ID,
@@ -27,26 +28,38 @@ PILL_FATES = {"pill_ascension", "pill_wasted", "pill_held", "pill_dormant"}
 REALM_FATES = {"realm_opened", "realm_found", "realm_sealed"}
 
 
-def _steal_map_at_tick_zero(state: WorldState) -> None:
+def _take_map_at_temple(state: WorldState) -> list[WorldEvent]:
+    events: list[WorldEvent] = []
     for target in (LOC_XUANYUE_SECT, LOC_BLACKWOOD_FOREST, LOC_RUINED_TEMPLE):
+        events.extend(
+            apply_command(
+                state,
+                make_command(
+                    state, PLAYER_ID, "move", {"to_location_id": target}, source="test"
+                ),
+            ).events
+        )
+    events.extend(
         apply_command(
             state,
-            make_command(state, PLAYER_ID, "move", {"to_location_id": target}, source="test"),
-        )
-    apply_command(
-        state,
-        make_command(
-            state,
-            PLAYER_ID,
-            "transfer_item",
-            {
-                "item_id": ITEM_MAP_FRAGMENT,
-                "from": {"kind": "location", "id": LOC_RUINED_TEMPLE},
-                "to": {"kind": "npc", "id": PLAYER_ID},
-            },
-            source="test",
-        ),
+            make_command(
+                state,
+                PLAYER_ID,
+                "transfer_item",
+                {
+                    "item_id": ITEM_MAP_FRAGMENT,
+                    "from": {"kind": "location", "id": LOC_RUINED_TEMPLE},
+                    "to": {"kind": "npc", "id": PLAYER_ID},
+                },
+                source="test",
+            ),
+        ).events
     )
+    return events
+
+
+def _steal_map_at_tick_zero(state: WorldState) -> None:
+    _take_map_at_temple(state)
 
 
 def test_fresh_world_has_sealed_realm_and_hidden_pill() -> None:
@@ -141,6 +154,53 @@ def test_revenge_ending_opens_then_resolves() -> None:
     }
     assert killer_deaths
     assert killer_deaths <= set(resolved["evidence_event_ids"])
+
+
+def test_entering_the_realm_opens_the_ending() -> None:
+    state = create_world(42)
+    events = _take_map_at_temple(state)
+    events.extend(
+        apply_command(
+            state,
+            make_command(
+                state,
+                PLAYER_ID,
+                "move",
+                {"to_location_id": LOC_MISTY_VALLEY},
+                source="test",
+            ),
+        ).events
+    )
+    events.extend(
+        apply_command(
+            state,
+            make_command(
+                state,
+                PLAYER_ID,
+                "investigate",
+                {"target_location_id": LOC_MISTY_VALLEY, "focus": "secret_realm"},
+                source="test",
+            ),
+        ).events
+    )
+    realm_id = next(iter(state.secret_realms))
+    events.extend(
+        apply_command(
+            state,
+            make_command(
+                state, PLAYER_ID, "enter_secret_realm", {"realm_id": realm_id}, source="test"
+            ),
+        ).events
+    )
+
+    report = evaluate_endings(state, events)
+
+    ids = {ending["ending_id"] for ending in report["endings"]}
+    assert "realm_opened" in ids
+    opened = next(e for e in report["endings"] if e["ending_id"] == "realm_opened")
+    entered_ids = {event.event_id for event in events if event.type == "SECRET_REALM_ENTERED"}
+    assert entered_ids
+    assert entered_ids <= set(opened["evidence_event_ids"])
 
 
 def test_stealing_the_map_changes_the_ending() -> None:
