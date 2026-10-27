@@ -50,6 +50,7 @@ checksum/UE5 actor-tag mapping.
 
 ```bash
 uv run python clients/godot/tools/check_gdscript.py
+uvx --from gdtoolkit==4.5.0 gdlint clients/godot/scripts
 uv run pytest clients/godot/tests -q
 uv run ruff check clients/godot/tools clients/godot/tests
 ```

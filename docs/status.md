@@ -40,7 +40,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Revenge E2E | master death → revenge goal with origin event → survivor proposes and resolves an attack on the killer | verified |
 | Knowledge boundary | fact/belief/private/memory separation, redaction, cited action explanations | verified |
 | UE5 pre-editor kit | deterministic layout JSON (8 locations, 30 NPCs), scene plan, licenses, editor checklist; no UE validation | verified |
-| Godot 4.7 vertical slice | presentation-only project, HTTP client, placeholder actors, layout sync/static checks; **runtime not run** | scaffold |
+| Godot 4.7 vertical slice | presentation-only project, HTTP client, placeholder actors, layout sync; GDScript parsed/linted by gdtoolkit 4.5.0; **runtime not run** | scaffold |
 | LLM proposal pipeline | strict JSON parsing, identity binding, one repair, audit rows, replay mode; simulator rejection triggers one Utility fallback | verified with mock; real-model legality rate unmeasured |
 | Provider HTTP adapters | OpenAI-compatible decision and embedding endpoints exercised over real localhost HTTP with a stub server | verified (no real model) |
 | Episodic memory | events → `memory_episode` in the command transaction; top-5 retrieval into prompt | verified |

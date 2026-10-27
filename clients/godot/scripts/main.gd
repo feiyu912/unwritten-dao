@@ -8,15 +8,6 @@ const CM_TO_M := 0.01
 const PLAYER_SPEED := 6.0
 const LOCATION_SEND_RADIUS := 3.5
 
-@onready var world_root: Node3D = $WorldRoot
-@onready var player: CharacterBody3D = $Player
-@onready var camera: Camera3D = $Camera3D
-@onready var status_label: Label = $UI/Root/VBox/StatusLabel
-@onready var event_log: RichTextLabel = $UI/Root/VBox/EventLog
-@onready var dialogue_edit: LineEdit = $UI/Root/VBox/DialogueRow/DialogueEdit
-@onready var talk_button: Button = $UI/Root/VBox/DialogueRow/TalkButton
-@onready var resync_button: Button = $UI/Root/VBox/DialogueRow/ResyncButton
-
 var client: WorldClient
 var layout: Dictionary = {}
 var state: Dictionary = {}
@@ -25,6 +16,15 @@ var location_positions: Dictionary = {}
 var current_location_id: String = ""
 var _location_cooldown: float = 0.0
 var _poll_elapsed: float = 0.0
+
+@onready var world_root: Node3D = $WorldRoot
+@onready var player: CharacterBody3D = $Player
+@onready var camera: Camera3D = $Camera3D
+@onready var status_label: Label = $UI/Root/VBox/StatusLabel
+@onready var event_log: RichTextLabel = $UI/Root/VBox/EventLog
+@onready var dialogue_edit: LineEdit = $UI/Root/VBox/DialogueRow/DialogueEdit
+@onready var talk_button: Button = $UI/Root/VBox/DialogueRow/TalkButton
+@onready var resync_button: Button = $UI/Root/VBox/DialogueRow/ResyncButton
 
 func _ready() -> void:
 	_parse_layout()
@@ -112,7 +112,7 @@ func _move_player_to_spawn() -> void:
 	var xy: Array = spawn.get("coordinates_xy_cm", [0, 0])
 	player.position = Vector3(float(xy[0]) * CM_TO_M, 1.0, float(xy[1]) * CM_TO_M)
 
-func _move_player(delta: float) -> void:
+func _move_player(_delta: float) -> void:
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var velocity := Vector3(input.x, 0, input.y) * PLAYER_SPEED
 	player.velocity = velocity
@@ -176,8 +176,12 @@ func _claim() -> void:
 	var opportunities: Dictionary = state.get("opportunities", {})
 	for opportunity_id in opportunities:
 		var opportunity: Dictionary = opportunities[opportunity_id]
-		if opportunity.get("location_id") == current_location_id and opportunity.get("claimed_by") == null:
-			client.send_command("claim_opportunity", {"opportunity_id": opportunity_id}, client.player_id)
+		var at_location: bool = opportunity.get("location_id") == current_location_id
+		var unclaimed: bool = opportunity.get("claimed_by") == null
+		if at_location and unclaimed:
+			client.send_command(
+				"claim_opportunity", {"opportunity_id": opportunity_id}, client.player_id
+			)
 			return
 	_append_log("No visible opportunity here.")
 
@@ -188,7 +192,9 @@ func _talk() -> void:
 	var npcs: Dictionary = state.get("npcs", {})
 	for npc_id in npcs:
 		var npc: Dictionary = npcs[npc_id]
-		if npc_id != client.player_id and npc.get("location_id") == current_location_id and npc.get("alive", false):
+		var same_location: bool = npc.get("location_id") == current_location_id
+		var alive: bool = npc.get("alive", false)
+		if npc_id != client.player_id and same_location and alive:
 			client.send_dialogue(npc_id, message)
 			dialogue_edit.text = ""
 			return

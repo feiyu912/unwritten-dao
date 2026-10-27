@@ -46,3 +46,6 @@ dashboard-db:
 
 collect-decisions:
 	uv run python -m tools.collect_decisions --days 10
+
+godot-lint:
+	uvx --from gdtoolkit==4.5.0 gdlint clients/godot/scripts

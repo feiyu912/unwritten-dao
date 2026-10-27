@@ -1,5 +1,5 @@
-extends Node3D
 class_name NpcView
+extends Node3D
 
 ## Presentation-only actor keyed by the authoritative npc_id.
 

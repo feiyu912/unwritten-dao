@@ -1,5 +1,5 @@
-extends Node
 class_name WorldClient
+extends Node
 
 ## Presentation-only HTTP client for the authoritative world server.
 ## It never computes cultivation, combat, death, ownership, or discovery.
