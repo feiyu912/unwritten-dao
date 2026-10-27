@@ -55,6 +55,15 @@ evidence exists yet.
   `state_version` 749 → 750, and `/v1/health` then reported `tick: 366`.
 - Not run: editor session, mouse/keyboard movement, rendering, FPS.
 
+## Latest verification (2026-10-27, decision trajectory summary)
+
+- `tools/collect_decisions --days 10 --policy utility`: 37 samples, 29 NPCs, 37 accepted,
+  0 violations.
+- `tools.decision_quality` on that JSONL: action diversity 6, goal coverage 1.00,
+  `chosen_outside_available=0`, `wait_share=0.00`.
+- `tests/e2e/test_decision_quality.py` covers the real collector schema plus rejection and
+  invalid-choice accounting.
+
 ## How to reproduce the PASS rows
 
 ```bash

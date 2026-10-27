@@ -34,6 +34,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Agent tiering | 6 major roles use the LLM path; otherwise RivalryPolicy (subdue on sight) for majors, UtilityPolicy for background | verified |
 | Pluggable decision model | DecisionModelPolicy + scoring/value protocols + legal mask + JSON decision records; no training | verified |
 | Decision dataset | `tools/collect_decisions.py --policy utility|rivalry|llm-mock|decision-model`: observation/goals/actions/choice/outcome/event ids; 30 samples / 2 days, all accepted | verified |
+| Decision trajectory summary | `tools.decision_quality.py` on `decision-sample.v1` JSONL: acceptance, rejections, action diversity, goal/confidence/event coverage, invalid choices; 37/37 accepted on a 10-day utility run | verified |
 | Canonical past | 7 seeded beliefs become queryable `BELIEF_ACQUIRED` events (ids 1..7); transfers can cite them | verified |
 | Server decision-model mode | `AGENT_PROVIDER=decision-model` returns a proposal and stores candidate/score/mask sample (migration 0004) | verified |
 | Goal evolution | revenge after a killer's act, defeat_rival completion, persistent goals across 200+ ticks; revenge drives a lethal attack when the target is visible | verified |
