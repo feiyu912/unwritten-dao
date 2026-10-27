@@ -26,6 +26,7 @@ from world_core import (
     advance_time,
     apply_command,
     create_world,
+    evaluate_endings,
     make_command,
     restore_snapshot,
     snapshot,
@@ -64,6 +65,7 @@ class Game:
     def __init__(self, state: WorldState) -> None:
         self.state = state
         self.policy = RivalryPolicy()
+        self.events: list[Any] = []
 
     def player(self):
         return self.state.npcs[PLAYER_ID]
@@ -160,6 +162,7 @@ class Game:
         self.report(result.events)
 
     def report(self, events: list[Any]) -> None:
+        self.events.extend(events)
         for event in events:
             if event.type in _KEY_EVENTS:
                 summary = summarize_event(event.type, event.payload, self.state)
@@ -189,7 +192,8 @@ class Game:
 
     def load(self, path: pathlib.Path) -> None:
         self.state = restore_snapshot(json.loads(path.read_text()))
-        print(f"已读档：{path}；tick {self.state.tick}")
+        self.events.clear()
+        print(f"已读档：{path}；tick {self.state.tick}（结局从当前会话事件重算）")
 
     def handle(self, line: str) -> bool:
         parts = line.strip().split()
@@ -298,6 +302,11 @@ def main(argv: list[str] | None = None) -> int:
     violations = validate_state(game.state)
     assert not violations, violations
     print(f"\n结束。tick={game.state.tick} checksum={state_checksum(game.state)}")
+    report = evaluate_endings(game.state, game.events)
+    print("结局：")
+    for ending in report["endings"]:
+        evidence = ", ".join(str(event_id) for event_id in ending["evidence_event_ids"]) or "—"
+        print(f"  {ending['ending_id']} — {ending['summary']}（证据 {evidence}）")
     return 0
 
 

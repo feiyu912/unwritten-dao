@@ -77,6 +77,8 @@ evidence exists yet.
   killer dies the next tick turns it into `blood_feud_resolved` citing both death events.
 - The dashboard (`export_dashboard`, both simulation and `--from-db`) renders a "世界结局" section;
   the persisted 1-year world shows `pill_ascension` and `realm_found` with evidence ids.
+- `tools.play` ends a session by printing the ending report; the CLI test's map→investigate→claim
+  script ends with `pill_held` and `realm_found`.
 
 ## How to reproduce the PASS rows
 

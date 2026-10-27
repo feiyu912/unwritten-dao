@@ -24,3 +24,6 @@ def test_play_cli_script_reaches_the_pill() -> None:
     assert "claimed" in result.stdout
     assert "筑基丹" in result.stdout
     assert "checksum=sha256:" in result.stdout
+    assert "结局：" in result.stdout
+    assert "pill_held" in result.stdout
+    assert "realm_found" in result.stdout
