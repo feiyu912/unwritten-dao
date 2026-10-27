@@ -37,6 +37,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Canonical past | 7 seeded beliefs become queryable `BELIEF_ACQUIRED` events (ids 1..7); transfers can cite them | verified |
 | Server decision-model mode | `AGENT_PROVIDER=decision-model` returns a proposal and stores candidate/score/mask sample (migration 0004) | verified |
 | Goal evolution | revenge after a killer's act, defeat_rival completion, persistent goals across 200+ ticks; revenge drives a lethal attack when the target is visible | verified |
+| Revenge E2E | master death → revenge goal with origin event → survivor proposes and resolves an attack on the killer | verified |
 | Knowledge boundary | fact/belief/private/memory separation, redaction, cited action explanations | verified |
 | UE5 pre-editor kit | deterministic layout JSON (8 locations, 30 NPCs), scene plan, licenses, editor checklist; no UE validation | verified |
 | LLM proposal pipeline | strict JSON parsing, identity binding, one repair, audit rows, replay mode; simulator rejection triggers one Utility fallback | verified with mock; real-model legality rate unmeasured |
