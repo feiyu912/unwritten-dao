@@ -54,7 +54,7 @@ def evaluate_endings(state: WorldState, events: Sequence[WorldEvent]) -> dict[st
             acquisitions,
         )
     )
-    endings.extend(_realm_endings(events))
+    endings.extend(_realm_endings(state, events))
     endings.extend(_feud_endings(state, events))
 
     evidence: set[int] = set()
@@ -130,18 +130,30 @@ def _pill_ending(
     return _ending("pill_dormant", "the foundation pill has no owner", [])
 
 
-def _realm_endings(events: Sequence[WorldEvent]) -> list[dict[str, Any]]:
-    discovered = [e for e in events if e.type == "SECRET_REALM_DISCOVERED"]
-    entered = [e for e in events if e.type == "SECRET_REALM_ENTERED"]
+def _realm_endings(state: WorldState, events: Sequence[WorldEvent]) -> list[dict[str, Any]]:
+    # Prefer the state's authoritative event references so a snapshot without
+    # its event log (for example after loading a save) still reports correctly.
+    discovered = {
+        event_id
+        for realm in state.secret_realms.values()
+        for event_id in realm.discovery_event_ids.values()
+    }
+    entered = {
+        event_id
+        for realm in state.secret_realms.values()
+        for event_id in realm.entry_event_ids.values()
+    }
+    discovered.update(e.event_id for e in events if e.type == "SECRET_REALM_DISCOVERED")
+    entered.update(e.event_id for e in events if e.type == "SECRET_REALM_ENTERED")
     if entered:
-        evidence = [e.event_id for e in discovered] + [e.event_id for e in entered]
+        evidence = sorted(discovered | entered)
         return [_ending("realm_opened", "the ancient cave was entered", evidence)]
     if discovered:
         return [
             _ending(
                 "realm_found",
                 "the ancient cave was discovered but never entered",
-                [e.event_id for e in discovered],
+                sorted(discovered),
             )
         ]
     return [_ending("realm_sealed", "no one discovered the ancient cave", [])]

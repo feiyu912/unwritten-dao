@@ -202,6 +202,12 @@ def test_entering_the_realm_opens_the_ending() -> None:
     assert entered_ids
     assert entered_ids <= set(opened["evidence_event_ids"])
 
+    # A snapshot without its event log (e.g. after loading a save) must still
+    # report the realm as opened from the state's own event references.
+    bare = evaluate_endings(state, [])
+    bare_opened = next(e for e in bare["endings"] if e["ending_id"] == "realm_opened")
+    assert entered_ids <= set(bare_opened["evidence_event_ids"])
+
 
 def test_stealing_the_map_changes_the_ending() -> None:
     baseline_state, baseline_events = simulate(days=60, seed=42)

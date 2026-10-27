@@ -78,6 +78,8 @@ evidence exists yet.
   evidence id is present in the supplied event log.
 - Entering the realm through real commands produces `realm_opened` citing the
   `SECRET_REALM_ENTERED` event (every pill/realm/feud label is now produced by a test).
+- Evaluating a snapshot with an empty event list still reports the realm as opened/entered,
+  because the evaluator falls back to the state's own discovery/entry event references.
 - Revenge branch from real events: a witnessed death opens `blood_feud_open`, and after the
   killer dies the next tick turns it into `blood_feud_resolved` citing both death events.
 - The dashboard (`export_dashboard`, both simulation and `--from-db`) renders a "世界结局" section;
