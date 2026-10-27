@@ -36,7 +36,7 @@ triggers a snapshot resync and never local simulation.
 
 ## Data
 
-`data/mvp_scene.json` is copied from `clients/unreal/Content/Layout/mvp_scene.json`:
+`layout/mvp_scene.json` is copied from `clients/unreal/Content/Layout/mvp_scene.json`:
 
 ```bash
 uv run python clients/godot/tools/sync_layout.py          # copy + validate

@@ -1,0 +1,792 @@
+{
+  "schema_version": "unreal-scene-layout.v1",
+  "generator": "clients/unreal/tools/export_scene_layout.py",
+  "source": {
+    "world_id": "e711aaed-fe1a-5853-b6d6-80a848df3eb7",
+    "world_seed": 42,
+    "player_id": "406f2708-f41f-5fb5-9957-a8f13776b72a",
+    "tick": 0,
+    "state_version": 0,
+    "sim_version": "0.1.0",
+    "ruleset_version": "1.0.0",
+    "source_checksum": "sha256:2d739daabca53ee31f00f4ac427dc52292df96c03c32bf7f73dd67d603b4fa67"
+  },
+  "counts": {
+    "locations": 8,
+    "npc_spawns": 30,
+    "player_spawns": 1
+  },
+  "coordinate_system": {
+    "units": "centimeters",
+    "plane": "XY",
+    "x_axis": "east",
+    "y_axis": "north",
+    "z_axis": "up"
+  },
+  "unreal": {
+    "npc_actor_class": "/Script/UnwrittenDao.NpcViewActor",
+    "location_marker_actor_class": "/Script/Engine.TargetPoint"
+  },
+  "locations": [
+    {
+      "location_id": "location_stone_town",
+      "display_name": "青石镇",
+      "kind": "town",
+      "faction_id": null,
+      "aura_multiplier": 0.8,
+      "coordinates_xy_cm": [
+        0,
+        0
+      ],
+      "adjacency": [
+        "location_xuanyue_sect",
+        "location_black_market"
+      ],
+      "interaction_anchor": {
+        "anchor_id": "town_courtyard",
+        "local_offset_xy_cm": [
+          250,
+          200
+        ],
+        "coordinates_xy_cm": [
+          250,
+          200
+        ]
+      },
+      "scene_area": "courtyard",
+      "actor_tag": "LOC_StoneTown"
+    },
+    {
+      "location_id": "location_xuanyue_sect",
+      "display_name": "玄岳宗",
+      "kind": "sect",
+      "faction_id": "5119fed7-14e1-5851-afbc-29caacbd9c5a",
+      "aura_multiplier": 1.1,
+      "coordinates_xy_cm": [
+        7000,
+        1200
+      ],
+      "adjacency": [
+        "location_stone_town",
+        "location_blackwood_forest"
+      ],
+      "interaction_anchor": {
+        "anchor_id": "sect_gate",
+        "local_offset_xy_cm": [
+          -1100,
+          0
+        ],
+        "coordinates_xy_cm": [
+          5900,
+          1200
+        ]
+      },
+      "scene_area": "sect_gate",
+      "actor_tag": "LOC_XuanyueSect"
+    },
+    {
+      "location_id": "location_blackwood_forest",
+      "display_name": "落鸦林",
+      "kind": "wilderness",
+      "faction_id": null,
+      "aura_multiplier": 0.7,
+      "coordinates_xy_cm": [
+        14500,
+        -800
+      ],
+      "adjacency": [
+        "location_xuanyue_sect",
+        "location_ruined_temple",
+        "location_chixiao_outpost"
+      ],
+      "interaction_anchor": {
+        "anchor_id": "forest_edge",
+        "local_offset_xy_cm": [
+          -1300,
+          200
+        ],
+        "coordinates_xy_cm": [
+          13200,
+          -600
+        ]
+      },
+      "scene_area": "forest_edge",
+      "actor_tag": "LOC_BlackwoodForest"
+    },
+    {
+      "location_id": "location_ruined_temple",
+      "display_name": "山间破庙",
+      "kind": "ruin",
+      "faction_id": null,
+      "aura_multiplier": 0.5,
+      "coordinates_xy_cm": [
+        20500,
+        3500
+      ],
+      "adjacency": [
+        "location_blackwood_forest",
+        "location_misty_valley"
+      ],
+      "interaction_anchor": {
+        "anchor_id": "temple_courtyard",
+        "local_offset_xy_cm": [
+          0,
+          0
+        ],
+        "coordinates_xy_cm": [
+          20500,
+          3500
+        ]
+      },
+      "scene_area": "supporting",
+      "actor_tag": "LOC_RuinedTemple"
+    },
+    {
+      "location_id": "location_misty_valley",
+      "display_name": "迷雾谷",
+      "kind": "wilderness",
+      "faction_id": null,
+      "aura_multiplier": 0.9,
+      "coordinates_xy_cm": [
+        26500,
+        5800
+      ],
+      "adjacency": [
+        "location_ruined_temple",
+        "location_ancient_cave"
+      ],
+      "interaction_anchor": {
+        "anchor_id": "valley_trail",
+        "local_offset_xy_cm": [
+          -1200,
+          0
+        ],
+        "coordinates_xy_cm": [
+          25300,
+          5800
+        ]
+      },
+      "scene_area": "supporting",
+      "actor_tag": "LOC_MistyValley"
+    },
+    {
+      "location_id": "location_ancient_cave",
+      "display_name": "无名古修洞府",
+      "kind": "secret_realm",
+      "faction_id": null,
+      "aura_multiplier": 2.0,
+      "coordinates_xy_cm": [
+        30800,
+        8600
+      ],
+      "adjacency": [
+        "location_misty_valley"
+      ],
+      "interaction_anchor": {
+        "anchor_id": "cave_mouth",
+        "local_offset_xy_cm": [
+          -900,
+          0
+        ],
+        "coordinates_xy_cm": [
+          29900,
+          8600
+        ]
+      },
+      "scene_area": "secret_realm_entrance",
+      "actor_tag": "LOC_AncientCave"
+    },
+    {
+      "location_id": "location_chixiao_outpost",
+      "display_name": "赤霄门外据点",
+      "kind": "outpost",
+      "faction_id": "fc86d6b0-bf16-5c9c-9dd6-486dd7e9a33b",
+      "aura_multiplier": 0.9,
+      "coordinates_xy_cm": [
+        17000,
+        -6500
+      ],
+      "adjacency": [
+        "location_blackwood_forest"
+      ],
+      "interaction_anchor": {
+        "anchor_id": "outpost_gate",
+        "local_offset_xy_cm": [
+          0,
+          900
+        ],
+        "coordinates_xy_cm": [
+          17000,
+          -5600
+        ]
+      },
+      "scene_area": "supporting",
+      "actor_tag": "LOC_ChixiaoOutpost"
+    },
+    {
+      "location_id": "location_black_market",
+      "display_name": "黑石集市",
+      "kind": "shop",
+      "faction_id": null,
+      "aura_multiplier": 0.5,
+      "coordinates_xy_cm": [
+        -3500,
+        -4200
+      ],
+      "adjacency": [
+        "location_stone_town"
+      ],
+      "interaction_anchor": {
+        "anchor_id": "market_alley",
+        "local_offset_xy_cm": [
+          0,
+          0
+        ],
+        "coordinates_xy_cm": [
+          -3500,
+          -4200
+        ]
+      },
+      "scene_area": "supporting",
+      "actor_tag": "LOC_BlackMarket"
+    }
+  ],
+  "npc_spawns": [
+    {
+      "npc_id": "20eff347-148a-540b-ac58-9fbeece8656c",
+      "name": "秋娘",
+      "canonical_role": "innkeeper",
+      "location_id": "location_stone_town",
+      "local_offset_xy_cm": [
+        -269.1,
+        25.5
+      ],
+      "coordinates_xy_cm": [
+        -269.1,
+        25.5
+      ],
+      "actor_tag": "NPC_20EFF347148A",
+      "is_player": false
+    },
+    {
+      "npc_id": "3fe1b442-9e6f-5c9a-b5da-7fe61de72059",
+      "name": "赵五",
+      "canonical_role": "guard",
+      "location_id": "location_stone_town",
+      "local_offset_xy_cm": [
+        -134.1,
+        -340.3
+      ],
+      "coordinates_xy_cm": [
+        -134.1,
+        -340.3
+      ],
+      "actor_tag": "NPC_3FE1B4429E6F",
+      "is_player": false
+    },
+    {
+      "npc_id": "406f2708-f41f-5fb5-9957-a8f13776b72a",
+      "name": "谢无咎",
+      "canonical_role": "player",
+      "location_id": "location_stone_town",
+      "local_offset_xy_cm": [
+        44.8,
+        290.8
+      ],
+      "coordinates_xy_cm": [
+        44.8,
+        290.8
+      ],
+      "actor_tag": "NPC_406F2708F41F",
+      "is_player": true
+    },
+    {
+      "npc_id": "47c9ddc7-cdbf-5bbb-8a1c-196cb980e6e9",
+      "name": "杜衡",
+      "canonical_role": "merchant",
+      "location_id": "location_stone_town",
+      "local_offset_xy_cm": [
+        -334.2,
+        -52.5
+      ],
+      "coordinates_xy_cm": [
+        -334.2,
+        -52.5
+      ],
+      "actor_tag": "NPC_47C9DDC7CDBF",
+      "is_player": false
+    },
+    {
+      "npc_id": "5e6d1083-eef3-5132-aeeb-e73dc46698d2",
+      "name": "小满",
+      "canonical_role": "cook",
+      "location_id": "location_stone_town",
+      "local_offset_xy_cm": [
+        -116.4,
+        185.9
+      ],
+      "coordinates_xy_cm": [
+        -116.4,
+        185.9
+      ],
+      "actor_tag": "NPC_5E6D1083EEF3",
+      "is_player": false
+    },
+    {
+      "npc_id": "78f96568-f06c-5a0c-b95c-acc98bd7d146",
+      "name": "燕青",
+      "canonical_role": "explorer",
+      "location_id": "location_stone_town",
+      "local_offset_xy_cm": [
+        -128.3,
+        93.2
+      ],
+      "coordinates_xy_cm": [
+        -128.3,
+        93.2
+      ],
+      "actor_tag": "NPC_78F96568F06C",
+      "is_player": false
+    },
+    {
+      "npc_id": "b08828f0-a732-55a0-b86f-a3a31395d381",
+      "name": "石头",
+      "canonical_role": "laborer",
+      "location_id": "location_stone_town",
+      "local_offset_xy_cm": [
+        265.0,
+        172.1
+      ],
+      "coordinates_xy_cm": [
+        265.0,
+        172.1
+      ],
+      "actor_tag": "NPC_B08828F0A732",
+      "is_player": false
+    },
+    {
+      "npc_id": "cd2b74cd-090b-5ea6-b532-00adf37a80da",
+      "name": "阿绣",
+      "canonical_role": "seamstress",
+      "location_id": "location_stone_town",
+      "local_offset_xy_cm": [
+        3.8,
+        305.9
+      ],
+      "coordinates_xy_cm": [
+        3.8,
+        305.9
+      ],
+      "actor_tag": "NPC_CD2B74CD090B",
+      "is_player": false
+    },
+    {
+      "npc_id": "d368c9b0-ed4f-5aef-b847-959de04ee28d",
+      "name": "黄四",
+      "canonical_role": "laborer",
+      "location_id": "location_stone_town",
+      "local_offset_xy_cm": [
+        173.2,
+        -82.8
+      ],
+      "coordinates_xy_cm": [
+        173.2,
+        -82.8
+      ],
+      "actor_tag": "NPC_D368C9B0ED4F",
+      "is_player": false
+    },
+    {
+      "npc_id": "19b45cf5-e81a-5045-8717-2fc6176b3177",
+      "name": "苏芷",
+      "canonical_role": "alchemist_elder",
+      "location_id": "location_xuanyue_sect",
+      "local_offset_xy_cm": [
+        -140.9,
+        348.6
+      ],
+      "coordinates_xy_cm": [
+        6859.1,
+        1548.6
+      ],
+      "actor_tag": "NPC_19B45CF5E81A",
+      "is_player": false
+    },
+    {
+      "npc_id": "20ce4377-a62c-57a2-bbae-44709ea0324f",
+      "name": "采薇",
+      "canonical_role": "servant",
+      "location_id": "location_xuanyue_sect",
+      "local_offset_xy_cm": [
+        -92.1,
+        -159.3
+      ],
+      "coordinates_xy_cm": [
+        6907.9,
+        1040.7
+      ],
+      "actor_tag": "NPC_20CE4377A62C",
+      "is_player": false
+    },
+    {
+      "npc_id": "45367fe3-b4ec-5952-b8a9-56750550143e",
+      "name": "林晚",
+      "canonical_role": "inner_disciple",
+      "location_id": "location_xuanyue_sect",
+      "local_offset_xy_cm": [
+        27.6,
+        -208.7
+      ],
+      "coordinates_xy_cm": [
+        7027.6,
+        991.3
+      ],
+      "actor_tag": "NPC_45367FE3B4EC",
+      "is_player": false
+    },
+    {
+      "npc_id": "8dbee2d5-c947-5e64-a134-76ea8f723f70",
+      "name": "山雀",
+      "canonical_role": "messenger",
+      "location_id": "location_xuanyue_sect",
+      "local_offset_xy_cm": [
+        -286.6,
+        139.1
+      ],
+      "coordinates_xy_cm": [
+        6713.4,
+        1339.1
+      ],
+      "actor_tag": "NPC_8DBEE2D5C947",
+      "is_player": false
+    },
+    {
+      "npc_id": "c989de8e-b56f-5cb7-995d-5bccfe66307e",
+      "name": "沈砚",
+      "canonical_role": "protagonist",
+      "location_id": "location_xuanyue_sect",
+      "local_offset_xy_cm": [
+        45.6,
+        220.3
+      ],
+      "coordinates_xy_cm": [
+        7045.6,
+        1420.3
+      ],
+      "actor_tag": "NPC_C989DE8EB56F",
+      "is_player": false
+    },
+    {
+      "npc_id": "d292258a-077d-52b1-b8e0-fb610ea7f8e4",
+      "name": "阿禾",
+      "canonical_role": "servant",
+      "location_id": "location_xuanyue_sect",
+      "local_offset_xy_cm": [
+        8.1,
+        -151.0
+      ],
+      "coordinates_xy_cm": [
+        7008.1,
+        1049.0
+      ],
+      "actor_tag": "NPC_D292258A077D",
+      "is_player": false
+    },
+    {
+      "npc_id": "d6ee6269-d432-56ba-9c8d-b9a1c2960646",
+      "name": "陆玄机",
+      "canonical_role": "sect_leader",
+      "location_id": "location_xuanyue_sect",
+      "local_offset_xy_cm": [
+        -312.1,
+        -13.8
+      ],
+      "coordinates_xy_cm": [
+        6687.9,
+        1186.2
+      ],
+      "actor_tag": "NPC_D6EE6269D432",
+      "is_player": false
+    },
+    {
+      "npc_id": "ea18a2b6-28b6-51dd-b2e2-3a702a64bc8e",
+      "name": "陈九",
+      "canonical_role": "guard",
+      "location_id": "location_xuanyue_sect",
+      "local_offset_xy_cm": [
+        294.7,
+        87.8
+      ],
+      "coordinates_xy_cm": [
+        7294.7,
+        1287.8
+      ],
+      "actor_tag": "NPC_EA18A2B628B6",
+      "is_player": false
+    },
+    {
+      "npc_id": "f268f92c-790b-5a6b-b805-3fc29140d16e",
+      "name": "周牧",
+      "canonical_role": "deacon",
+      "location_id": "location_xuanyue_sect",
+      "local_offset_xy_cm": [
+        -23.5,
+        -224.4
+      ],
+      "coordinates_xy_cm": [
+        6976.5,
+        975.6
+      ],
+      "actor_tag": "NPC_F268F92C790B",
+      "is_player": false
+    },
+    {
+      "npc_id": "f3fbf060-0d77-53d7-8a3a-2462ff965d03",
+      "name": "老槐",
+      "canonical_role": "gardener",
+      "location_id": "location_xuanyue_sect",
+      "local_offset_xy_cm": [
+        285.2,
+        -221.3
+      ],
+      "coordinates_xy_cm": [
+        7285.2,
+        978.7
+      ],
+      "actor_tag": "NPC_F3FBF0600D77",
+      "is_player": false
+    },
+    {
+      "npc_id": "40326638-1037-5021-8c3e-4226f5034299",
+      "name": "乔芸",
+      "canonical_role": "herb_gatherer",
+      "location_id": "location_blackwood_forest",
+      "local_offset_xy_cm": [
+        241.8,
+        -243.9
+      ],
+      "coordinates_xy_cm": [
+        14741.8,
+        -1043.9
+      ],
+      "actor_tag": "NPC_403266381037",
+      "is_player": false
+    },
+    {
+      "npc_id": "996ed172-4204-577b-8d57-08227faaf23a",
+      "name": "柳生",
+      "canonical_role": "wanderer",
+      "location_id": "location_blackwood_forest",
+      "local_offset_xy_cm": [
+        -145.3,
+        308.0
+      ],
+      "coordinates_xy_cm": [
+        14354.7,
+        -492.0
+      ],
+      "actor_tag": "NPC_996ED1724204",
+      "is_player": false
+    },
+    {
+      "npc_id": "9da18ca2-e984-5632-b77c-bbf0d0a106a7",
+      "name": "木雨",
+      "canonical_role": "wanderer",
+      "location_id": "location_blackwood_forest",
+      "local_offset_xy_cm": [
+        335.5,
+        -44.1
+      ],
+      "coordinates_xy_cm": [
+        14835.5,
+        -844.1
+      ],
+      "actor_tag": "NPC_9DA18CA2E984",
+      "is_player": false
+    },
+    {
+      "npc_id": "c5726380-8d83-59ee-a88d-06327140f834",
+      "name": "青萝",
+      "canonical_role": "herb_gatherer",
+      "location_id": "location_blackwood_forest",
+      "local_offset_xy_cm": [
+        55.8,
+        -140.3
+      ],
+      "coordinates_xy_cm": [
+        14555.8,
+        -940.3
+      ],
+      "actor_tag": "NPC_C57263808D83",
+      "is_player": false
+    },
+    {
+      "npc_id": "fa0e315a-2440-59f0-8e57-8e799503666b",
+      "name": "顾三",
+      "canonical_role": "hunter",
+      "location_id": "location_blackwood_forest",
+      "local_offset_xy_cm": [
+        -160.4,
+        43.0
+      ],
+      "coordinates_xy_cm": [
+        14339.6,
+        -757.0
+      ],
+      "actor_tag": "NPC_FA0E315A2440",
+      "is_player": false
+    },
+    {
+      "npc_id": "0423e919-e5f8-5a43-8924-f960e5b88a7d",
+      "name": "罗川",
+      "canonical_role": "chixiao_deacon",
+      "location_id": "location_chixiao_outpost",
+      "local_offset_xy_cm": [
+        2.3,
+        152.8
+      ],
+      "coordinates_xy_cm": [
+        17002.3,
+        -6347.2
+      ],
+      "actor_tag": "NPC_0423E919E5F8",
+      "is_player": false
+    },
+    {
+      "npc_id": "4f7ac7c6-f8de-55d9-a16a-4bcef2c2f9c5",
+      "name": "白琳",
+      "canonical_role": "chixiao_disciple",
+      "location_id": "location_chixiao_outpost",
+      "local_offset_xy_cm": [
+        -28.2,
+        232.2
+      ],
+      "coordinates_xy_cm": [
+        16971.8,
+        -6267.8
+      ],
+      "actor_tag": "NPC_4F7AC7C6F8DE",
+      "is_player": false
+    },
+    {
+      "npc_id": "a3ef437b-4d62-5f15-aec8-22909f1fe7f7",
+      "name": "霍燃",
+      "canonical_role": "enemy_leader",
+      "location_id": "location_chixiao_outpost",
+      "local_offset_xy_cm": [
+        156.6,
+        -319.2
+      ],
+      "coordinates_xy_cm": [
+        17156.6,
+        -6819.2
+      ],
+      "actor_tag": "NPC_A3EF437B4D62",
+      "is_player": false
+    },
+    {
+      "npc_id": "aaed2ab6-10d5-50c5-9cef-e844ef3dac3f",
+      "name": "裴烈",
+      "canonical_role": "rival",
+      "location_id": "location_chixiao_outpost",
+      "local_offset_xy_cm": [
+        115.1,
+        -297.6
+      ],
+      "coordinates_xy_cm": [
+        17115.1,
+        -6797.6
+      ],
+      "actor_tag": "NPC_AAED2AB610D5",
+      "is_player": false
+    },
+    {
+      "npc_id": "f60dab51-af6c-50e7-9939-7e950049609a",
+      "name": "铁牛",
+      "canonical_role": "guard",
+      "location_id": "location_chixiao_outpost",
+      "local_offset_xy_cm": [
+        -11.4,
+        -183.4
+      ],
+      "coordinates_xy_cm": [
+        16988.6,
+        -6683.4
+      ],
+      "actor_tag": "NPC_F60DAB51AF6C",
+      "is_player": false
+    },
+    {
+      "npc_id": "4b5841f8-1139-561c-8611-6a9a7be9e0c5",
+      "name": "石三",
+      "canonical_role": "black_marketeer",
+      "location_id": "location_black_market",
+      "local_offset_xy_cm": [
+        -213.7,
+        97.8
+      ],
+      "coordinates_xy_cm": [
+        -3713.7,
+        -4102.2
+      ],
+      "actor_tag": "NPC_4B5841F81139",
+      "is_player": false
+    }
+  ],
+  "player_spawn": {
+    "npc_id": "406f2708-f41f-5fb5-9957-a8f13776b72a",
+    "name": "谢无咎",
+    "location_id": "location_stone_town",
+    "local_offset_xy_cm": [
+      44.8,
+      290.8
+    ],
+    "coordinates_xy_cm": [
+      44.8,
+      290.8
+    ],
+    "actor_tag": "NPC_406F2708F41F"
+  },
+  "location_actor_map": {
+    "location_stone_town": {
+      "actor_tag": "LOC_StoneTown",
+      "streaming_level": "/Game/Maps/Streaming/L_StoneTown",
+      "streaming_rule": "always_loaded"
+    },
+    "location_xuanyue_sect": {
+      "actor_tag": "LOC_XuanyueSect",
+      "streaming_level": "/Game/Maps/Streaming/L_XuanyueSect",
+      "streaming_rule": "distance"
+    },
+    "location_blackwood_forest": {
+      "actor_tag": "LOC_BlackwoodForest",
+      "streaming_level": "/Game/Maps/Streaming/L_BlackwoodForest",
+      "streaming_rule": "distance"
+    },
+    "location_ruined_temple": {
+      "actor_tag": "LOC_RuinedTemple",
+      "streaming_level": "/Game/Maps/Streaming/L_RuinedTemple",
+      "streaming_rule": "distance"
+    },
+    "location_misty_valley": {
+      "actor_tag": "LOC_MistyValley",
+      "streaming_level": "/Game/Maps/Streaming/L_MistyValley",
+      "streaming_rule": "distance"
+    },
+    "location_ancient_cave": {
+      "actor_tag": "LOC_AncientCave",
+      "streaming_level": "/Game/Maps/Streaming/L_AncientCave",
+      "streaming_rule": "manual"
+    },
+    "location_chixiao_outpost": {
+      "actor_tag": "LOC_ChixiaoOutpost",
+      "streaming_level": "/Game/Maps/Streaming/L_ChixiaoOutpost",
+      "streaming_rule": "manual"
+    },
+    "location_black_market": {
+      "actor_tag": "LOC_BlackMarket",
+      "streaming_level": "/Game/Maps/Streaming/L_BlackMarket",
+      "streaming_rule": "manual"
+    }
+  }
+}

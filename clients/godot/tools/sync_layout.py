@@ -28,8 +28,8 @@ SCRIPT_PATH = Path(__file__).resolve()
 GODOT_ROOT = SCRIPT_PATH.parents[1]
 REPO_ROOT = SCRIPT_PATH.parents[3]
 SOURCE_PATH = REPO_ROOT / "clients" / "unreal" / "Content" / "Layout" / "mvp_scene.json"
-DEST_PATH = GODOT_ROOT / "data" / "mvp_scene.json"
-MANIFEST_PATH = GODOT_ROOT / "data" / "mvp_scene.manifest.json"
+DEST_PATH = GODOT_ROOT / "layout" / "mvp_scene.json"
+MANIFEST_PATH = GODOT_ROOT / "layout" / "mvp_scene.manifest.json"
 
 EXPECTED_LOCATIONS = 8
 EXPECTED_NPC_SPAWNS = 30

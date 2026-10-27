@@ -1,0 +1,22 @@
+{
+  "copy_file_sha256": "39a1a3b722ecbafc9f57d00fefb17d5fe744ce677360c9b50fffcc6614cf13e0",
+  "location_ids": [
+    "location_ancient_cave",
+    "location_black_market",
+    "location_blackwood_forest",
+    "location_chixiao_outpost",
+    "location_misty_valley",
+    "location_ruined_temple",
+    "location_stone_town",
+    "location_xuanyue_sect"
+  ],
+  "locations": 8,
+  "npc_ids_sha256": "50acaed516330bf58bedcec6c7ec574be64bab52a46176c4fcaed6fa2181cd86",
+  "npc_spawns": 30,
+  "schema_version": "unreal-scene-layout.v1",
+  "source_file_sha256": "39a1a3b722ecbafc9f57d00fefb17d5fe744ce677360c9b50fffcc6614cf13e0",
+  "source_path": "clients/unreal/Content/Layout/mvp_scene.json",
+  "world_id": "e711aaed-fe1a-5853-b6d6-80a848df3eb7",
+  "world_seed": 42,
+  "world_source_checksum": "sha256:2d739daabca53ee31f00f4ac427dc52292df96c03c32bf7f73dd67d603b4fa67"
+}

@@ -16,7 +16,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PROJECT = ROOT / "project.godot"
 SCENE = ROOT / "scenes" / "main.tscn"
-LAYOUT = ROOT / "data" / "mvp_scene.json"
+LAYOUT = ROOT / "layout" / "mvp_scene.json"
 
 REQUIRED = {
     "scripts/world_client.gd": [

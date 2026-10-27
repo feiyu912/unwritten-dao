@@ -3,7 +3,7 @@ extends Node3D
 ## Godot vertical slice: renders authoritative snapshots and submits commands.
 ## It never computes game rules locally.
 
-const SCENE_DATA_PATH := "res://data/mvp_scene.json"
+const SCENE_DATA_PATH := "res://layout/mvp_scene.json"
 const CM_TO_M := 0.01
 const PLAYER_SPEED := 6.0
 const LOCATION_SEND_RADIUS := 3.5

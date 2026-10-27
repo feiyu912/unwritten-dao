@@ -39,7 +39,7 @@ def test_project_and_scene_files_exist() -> None:
 
 
 def test_layout_invariants() -> None:
-    layout = json.loads((GODOT / "data" / "mvp_scene.json").read_text(encoding="utf-8"))
+    layout = json.loads((GODOT / "layout" / "mvp_scene.json").read_text(encoding="utf-8"))
     assert len(layout["locations"]) == 8
     assert len(layout["npc_spawns"]) == 30
     npc_ids = [spawn["npc_id"] for spawn in layout["npc_spawns"]]
