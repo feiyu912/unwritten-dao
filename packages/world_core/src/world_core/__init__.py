@@ -14,6 +14,7 @@ from world_core.commands import (
     WorldCommand,
     make_command,
 )
+from world_core.endings import ENDING_SCHEMA_VERSION, evaluate_endings
 from world_core.engine import advance_time, apply_command, validate_state
 from world_core.errors import CommandRejected, SnapshotError
 from world_core.events import EventType, WorldEvent
@@ -66,6 +67,7 @@ from world_core.worldgen import (
 )
 
 __all__ = [
+    "ENDING_SCHEMA_VERSION",
     "FACTION_CHIXIAO",
     "FACTION_XUANYUE",
     "ITEM_FOUNDATION_PILL",
@@ -113,6 +115,7 @@ __all__ = [
     "belief_key",
     "canonical_json",
     "create_world",
+    "evaluate_endings",
     "expire_obsolete_goals",
     "faction_id",
     "genesis_events",
