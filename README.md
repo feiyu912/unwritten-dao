@@ -22,7 +22,7 @@ HTTP/WebSocket APIs. A UE5 client renders the authoritative state; it never simu
 
 ```bash
 uv sync --all-packages
-uv run pytest packages services tests clients/unreal/tools -m "not integration and not slow"
+uv run pytest packages services tests clients/unreal/tools clients/godot/tests -m "not integration and not slow"
 uv run python -m tools.bench_sim --npcs 30 --years 20 --seed 42
 uv run python -m tools.demo_causal --days 7300    # baseline vs stolen-map, 20 years
 uv run python -m tools.report_history --days 400   # causal coverage + goal outcome
@@ -59,6 +59,7 @@ packages/world_core/   authoritative simulation
 packages/agent_runtime/observation -> action proposal policies
 services/world_server/ FastAPI + persistence
 clients/unreal/        UE5 client (interface scaffold)
+clients/godot/         Godot 4.7 vertical slice (presentation-only)
 tests/                 contract, determinism, invariance, causal E2E
 tools/                 benchmarks and replay CLIs
 ```

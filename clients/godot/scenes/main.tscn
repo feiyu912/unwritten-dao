@@ -1,0 +1,87 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+
+[sub_resource type="Environment" id="Environment_main"]
+background_mode = 1
+background_color = Color(0.04, 0.05, 0.07, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.55, 0.6, 0.7, 1)
+ambient_light_energy = 0.6
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_player"]
+radius = 0.35
+height = 1.6
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_player"]
+radius = 0.35
+height = 1.6
+
+[sub_resource type="StandardMaterial3D" id="Material_player"]
+albedo_color = Color(0.95, 0.85, 0.35, 1)
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_main")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, -35, 0)
+light_energy = 1.1
+shadow_enabled = true
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8, 10)
+current = true
+fov = 55.0
+
+[node name="WorldRoot" type="Node3D" parent="."]
+
+[node name="Player" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="Collision" type="CollisionShape3D" parent="Player"]
+shape = SubResource("CapsuleShape_player")
+
+[node name="Body" type="MeshInstance3D" parent="Player"]
+mesh = SubResource("CapsuleMesh_player")
+material_override = SubResource("Material_player")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Root" type="MarginContainer" parent="UI"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -16.0
+offset_bottom = -16.0
+offset_left = 16.0
+offset_top = 16.0
+
+[node name="VBox" type="VBoxContainer" parent="UI/Root"]
+theme_override_constants/separation = 8
+
+[node name="StatusLabel" type="Label" parent="UI/Root/VBox"]
+text = "Connecting…"
+
+[node name="EventLog" type="RichTextLabel" parent="UI/Root/VBox"]
+custom_minimum_size = Vector2(0, 240)
+bbcode_enabled = true
+fit_content = false
+scroll_following = true
+
+[node name="DialogueRow" type="HBoxContainer" parent="UI/Root/VBox"]
+theme_override_constants/separation = 8
+
+[node name="DialogueEdit" type="LineEdit" parent="UI/Root/VBox/DialogueRow"]
+size_flags_horizontal = 3
+placeholder_text = "Say something to a nearby NPC (T)"
+
+[node name="TalkButton" type="Button" parent="UI/Root/VBox/DialogueRow"]
+text = "Talk"
+
+[node name="ResyncButton" type="Button" parent="UI/Root/VBox/DialogueRow"]
+text = "Resync"
+
+[node name="HelpLabel" type="Label" parent="UI/Root/VBox"]
+text = "WASD move · E interact (location) · F take · R investigate · G enter realm · H claim · N next day · F5 resync"

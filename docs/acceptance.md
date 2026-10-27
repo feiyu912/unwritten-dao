@@ -32,7 +32,7 @@ evidence exists yet.
 | R0 contracts + skeleton | PASS | `docs/contracts/`, contract tests, OpenAPI route conformance |
 | R1 headless causal world | PASS | 30 NPCs, 20 years, map intervention, 100k events |
 | R2 memory + LLM agents | PARTIAL | LLM policy, audit, replay, memory, dialogue verified with mock providers; 3D interaction not built |
-| R3 playable MVP | PARTIAL | Headless play CLI, history dashboard, HTTP playthrough, save/load, causal queries; UE5 client unvalidated |
+| R3 playable MVP | PARTIAL | Headless play CLI, history dashboard, HTTP playthrough, save/load, causal queries; UE5 unvalidated; Godot 4.7 slice statically checked but not run |
 
 ## Latest verification (2026-10-26, after the parallel round)
 
