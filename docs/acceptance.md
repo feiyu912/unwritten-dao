@@ -32,7 +32,7 @@ evidence exists yet.
 | R0 contracts + skeleton | PASS | `docs/contracts/`, contract tests, OpenAPI route conformance |
 | R1 headless causal world | PASS | 30 NPCs, 20 years, map intervention, 100k events |
 | R2 memory + LLM agents | PARTIAL | LLM policy, audit, replay, memory, dialogue verified with mock providers; 3D interaction not built |
-| R3 playable MVP | PARTIAL | Headless play CLI, history dashboard, HTTP playthrough, save/load, causal queries, traceable ending report; UE5 unvalidated; Godot 4.7 headless snapshot + command verified, editor/FPS not run |
+| R3 playable MVP | PARTIAL | Headless play CLI, history dashboard, HTTP playthrough, save/load, causal queries, traceable ending report; UE5 unvalidated; Godot 4.7 headless snapshot + command + full key-item loop verified, editor/FPS not run |
 
 ## Latest verification (2026-10-26, after the parallel round)
 
@@ -53,6 +53,9 @@ evidence exists yet.
   player=… location=location_stone_town npcs=30`.
 - `tests/smoke_server.gd` submitted `advance_time` through `WorldClient`; server answered 200,
   `state_version` 749 → 750, and `/v1/health` then reported `tick: 366`.
+- `clients/godot/tests/key_item_loop.gd` drove the full loop through `WorldClient` on a
+  tick-0 world: temple map → discovered/entered `realm_ancient_cave` → pill claimed
+  (`version=13`, `pill=true`, `discovered_by=true`).
 - Not run: editor session, mouse/keyboard movement, rendering, FPS.
 
 ## Latest verification (2026-10-27, decision trajectory summary)

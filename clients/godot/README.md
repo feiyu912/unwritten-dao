@@ -71,6 +71,10 @@ UNWRITTEN_DAO_API=http://127.0.0.1:8000 \
 It fetches a snapshot, submits one `advance_time` command through `WorldClient`, prints the
 result, and exits 0. It advances the persisted demo world by one day.
 
+`tests/key_item_loop.gd` requires a fresh tick-0 world (reset the local DB first) and drives the
+canonical loop: take the map, investigate, enter the realm, claim the pill. It mutates that
+world, so reseed afterwards.
+
 ## Limitations
 
 - No editor session, rendering check, or FPS measurement yet; only headless import and HTTP
