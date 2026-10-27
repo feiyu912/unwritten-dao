@@ -31,7 +31,8 @@ func _ready() -> void:
 	_spawn_locations()
 	_spawn_npcs()
 	client = WorldClient.new()
-	client.configure("http://127.0.0.1:8000")
+	var api_url := OS.get_environment("UNWRITTEN_DAO_API")
+	client.configure(api_url if not api_url.is_empty() else "http://127.0.0.1:8000")
 	add_child(client)
 	client.snapshot_received.connect(_on_snapshot)
 	client.events_received.connect(_on_events)
@@ -221,6 +222,9 @@ func _on_snapshot(snapshot: Dictionary) -> void:
 		client.tick, location_name, player_npc.get("realm", 0), player_npc.get("stage", 1),
 		player_npc.get("health", 0.0), player_npc.get("wealth", 0), npcs.size(),
 	]
+	print("snapshot tick=%d version=%d player=%s location=%s npcs=%d" % [
+		client.tick, client.state_version, client.player_id, current_location_id, npcs.size(),
+	])
 
 func _on_events(events: Array) -> void:
 	for event in events:
@@ -229,7 +233,9 @@ func _on_events(events: Array) -> void:
 		client.fetch_snapshot()
 
 func _on_command_completed(result: Dictionary) -> void:
-	for event in result.get("events", []):
+	var events: Array = result.get("events", [])
+	print("command completed version=%d events=%d" % [client.state_version, events.size()])
+	for event in events:
 		_append_log("[color=#9fe3b0]%s[/color]" % str(event.get("type", "")))
 	client.fetch_snapshot()
 
@@ -237,6 +243,7 @@ func _on_dialogue(reply: String) -> void:
 	_append_log("[color=#e9d18a]%s[/color]" % reply)
 
 func _on_request_failed(message: String) -> void:
+	print("request failed: %s" % message)
 	_append_log("[color=#ff8080]%s[/color]" % message)
 
 func _on_resync_required() -> void:

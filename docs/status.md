@@ -40,7 +40,7 @@ This is an evidence-based status report. "Delivered" means tests or commands wer
 | Revenge E2E | master death → revenge goal with origin event → survivor proposes and resolves an attack on the killer | verified |
 | Knowledge boundary | fact/belief/private/memory separation, redaction, cited action explanations | verified |
 | UE5 pre-editor kit | deterministic layout JSON (8 locations, 30 NPCs), scene plan, licenses, editor checklist; no UE validation | verified |
-| Godot 4.7 vertical slice | presentation-only project, HTTP client, placeholder actors, layout sync; GDScript parsed/linted by gdtoolkit 4.5.0; **runtime not run** | scaffold |
+| Godot 4.7 vertical slice | presentation-only project, HTTP client, placeholder actors, layout sync; gdtoolkit 4.5.0 clean; Godot 4.7.2 headless import + live-server snapshot + `advance_time` command (HTTP 200) verified on macOS; editor/FPS not run | headless runtime verified |
 | LLM proposal pipeline | strict JSON parsing, identity binding, one repair, audit rows, replay mode; simulator rejection triggers one Utility fallback | verified with mock; real-model legality rate unmeasured |
 | Provider HTTP adapters | OpenAI-compatible decision and embedding endpoints exercised over real localhost HTTP with a stub server | verified (no real model) |
 | Episodic memory | events → `memory_episode` in the command transaction; top-5 retrieval into prompt | verified |
@@ -70,8 +70,10 @@ excluded from the fast suite).
 ## Presentation note (2026-10-27)
 
 Per the updated report, a Godot 4.7 vertical slice is added **without deleting UE5**. The Godot
-client is additive and presentation-only; UE5 remains the high-fidelity path. The Godot project is
-statically checked but has not been opened or run (Godot is not installed on this Mac).
+client is additive and presentation-only; UE5 remains the high-fidelity path. Godot 4.7.2 was run
+headless on this Mac on 2026-10-27: project import succeeded, the client fetched a live snapshot
+(30 NPCs, tick 365) from the world server, and submitted an accepted `advance_time` command
+(HTTP 200, tick 366). The editor session, visuals, movement and FPS are still unverified.
 
 ## Not verified (requires other hardware or services)
 

@@ -32,7 +32,7 @@ evidence exists yet.
 | R0 contracts + skeleton | PASS | `docs/contracts/`, contract tests, OpenAPI route conformance |
 | R1 headless causal world | PASS | 30 NPCs, 20 years, map intervention, 100k events |
 | R2 memory + LLM agents | PARTIAL | LLM policy, audit, replay, memory, dialogue verified with mock providers; 3D interaction not built |
-| R3 playable MVP | PARTIAL | Headless play CLI, history dashboard, HTTP playthrough, save/load, causal queries; UE5 unvalidated; Godot 4.7 slice statically checked but not run |
+| R3 playable MVP | PARTIAL | Headless play CLI, history dashboard, HTTP playthrough, save/load, causal queries; UE5 unvalidated; Godot 4.7 headless snapshot + command verified, editor/FPS not run |
 
 ## Latest verification (2026-10-26, after the parallel round)
 
@@ -45,6 +45,15 @@ evidence exists yet.
 - 20-year persisted numbers in this file predate the state-schema change; the local DB must be
   reseeded with `tools.seed_history` before serving. No long benchmark was rerun in this round
   per the lightweight-verification constraint.
+
+## Latest verification (2026-10-27, Godot headless)
+
+- Godot 4.7.2 `--headless --import` on `clients/godot` completed with no script errors.
+- Headless run of `scenes/main.tscn` against a live server: `snapshot tick=365 version=749
+  player=… location=location_stone_town npcs=30`.
+- `tests/smoke_server.gd` submitted `advance_time` through `WorldClient`; server answered 200,
+  `state_version` 749 → 750, and `/v1/health` then reported `tick: 366`.
+- Not run: editor session, mouse/keyboard movement, rendering, FPS.
 
 ## How to reproduce the PASS rows
 

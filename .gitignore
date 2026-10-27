@@ -36,3 +36,5 @@ Binaries/
 # Local tool state
 .worktrees/
 .qoder/
+# Godot
+.godot/

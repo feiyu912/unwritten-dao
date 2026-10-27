@@ -3,9 +3,10 @@
 A lightweight Godot 4.7.2 client for the authoritative world server. This is an **additive**
 presentation layer: the UE5 scaffold remains, and neither client owns simulation truth.
 
-**Status: scaffold only.** Godot is not installed on the current macOS development machine, so
-the project has not been opened, imported, or run. Static checks and the layout sync are verified;
-runtime/FPS must be validated on the Windows or Ubuntu machine with Godot 4.7.2.
+**Status: headless runtime verified on macOS, editor/FPS not.** Godot 4.7.2 imported the project,
+fetched a live 30-NPC snapshot, and submitted an accepted `advance_time` command (HTTP 200) against
+the local world server on 2026-10-27. The interactive editor session, rendering, movement, and FPS
+are still unverified and must be checked on the Windows or Ubuntu machine.
 
 ## Run the backend
 
@@ -26,6 +27,9 @@ Use the local `.env` for the 5433 port on this machine. Seed a world if the data
 1. Install Godot 4.7.2 (standard build, no .NET).
 2. Import `clients/godot/project.godot`.
 3. Press Play. The client fetches `/v1/world/snapshot` and polls events every second.
+
+Set `UNWRITTEN_DAO_API` (for example `http://127.0.0.1:8011`) when the server does not run on the
+default `http://127.0.0.1:8000`.
 
 Controls: WASD move, E interact (move to nearest location), F take first item, R investigate,
 G enter a discovered realm, H claim, T talk, N advance one day, F5 resync.
@@ -50,14 +54,27 @@ checksum/UE5 actor-tag mapping.
 
 ```bash
 uv run python clients/godot/tools/check_gdscript.py
-uvx --from gdtoolkit==4.5.0 gdlint clients/godot/scripts
+uvx --from gdtoolkit==4.5.0 gdlint clients/godot/scripts clients/godot/tests/smoke_server.gd
 uv run pytest clients/godot/tests -q
 uv run ruff check clients/godot/tools clients/godot/tests
 ```
 
+## Live-server smoke (optional, not CI)
+
+With the world server running:
+
+```bash
+UNWRITTEN_DAO_API=http://127.0.0.1:8000 \
+  godot --headless --path clients/godot --script res://tests/smoke_server.gd
+```
+
+It fetches a snapshot, submits one `advance_time` command through `WorldClient`, prints the
+result, and exits 0. It advances the persisted demo world by one day.
+
 ## Limitations
 
-- No Godot editor/runtime validation on this machine.
+- No editor session, rendering check, or FPS measurement yet; only headless import and HTTP
+  round-trips were run on this machine.
 - No imported 3D assets: all meshes are built-in placeholders.
 - No real LLM/embedding calls; dialogue uses the server's configured provider or fallback.
 - The player can walk freely, but only location-level movement is authoritative.

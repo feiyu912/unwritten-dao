@@ -67,10 +67,10 @@ func _request(path: String, kind: String, payload: Dictionary = {}) -> bool:
 	busy = true
 	_http.set_meta("request_kind", kind)
 	var headers := PackedStringArray()
-	var method := "GET"
+	var method: HTTPClient.Method = HTTPClient.METHOD_GET
 	var body := ""
 	if not payload.is_empty():
-		method = "POST"
+		method = HTTPClient.METHOD_POST
 		body = JSON.stringify(payload)
 		headers.append("Content-Type: application/json")
 	var error := _http.request(base_url + path, headers, method, body)
