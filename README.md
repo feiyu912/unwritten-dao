@@ -5,18 +5,19 @@ and change a canonical storyline through validated actions. The simulator owns t
 models only propose actions.
 
 **Status:** R1 complete; R2 headless agent stack complete (LLM proposal pipeline, episodic
-memory, dialogue, audit/replay); R3 playable headless demo available. The UE5 client is an
-unvalidated scaffold; 3D/FPS work awaits a machine with Unreal. See
-[`docs/status.md`](docs/status.md) for the evidence table, [`docs/acceptance.md`](docs/acceptance.md)
-for the plan's acceptance checklist, and [`docs/runbook.md`](docs/runbook.md) for local, CI,
-and GPU-machine procedures.
+memory, dialogue, audit/replay); R3 playable headless demo available, plus a Godot 4.7
+presentation slice that has fetched a live snapshot and submitted a command headless. The UE5
+client is an unvalidated scaffold, and the Godot editor session/rendering/FPS are not measured.
+See [`docs/status.md`](docs/status.md) for the evidence table,
+[`docs/acceptance.md`](docs/acceptance.md) for the plan's acceptance checklist, and
+[`docs/runbook.md`](docs/runbook.md) for local, CI, and GPU-machine procedures.
 
 ## Architecture in one paragraph
 
 `world_core` is a pure, deterministic tick-based simulator with typed commands and an
 append-only event log. `agent_runtime` turns observations into validated action proposals
 (utility AI now, LLM later). `world_server` persists events/snapshots in PostgreSQL and exposes
-HTTP/WebSocket APIs. A UE5 client renders the authoritative state; it never simulates it.
+HTTP/WebSocket APIs. Godot and UE5 clients render the authoritative state; neither simulates it.
 
 ## Quickstart
 
@@ -31,6 +32,8 @@ uv run python -m tools.export_dashboard --years 20  # self-contained HTML histor
 uv run python -m tools.export_dashboard --from-db  # render the persisted server world
 uv run python -m tools.replay_decisions --days 30    # record model proposals, replay without a model
 uv run python -m tools.collect_decisions --days 10   # JSONL dataset for future BC/RL
+uv run python -m tools.decision_quality reports/decisions_dataset.jsonl  # trajectory summary
+uv run python -m tools.ending_report --days 365      # key-item/conflict endings from real events
 uv run python -m tools.seed_history --years 20 --reset  # persist a 20-year agent history (local DB)
 uv run python -m tools.bench_memory --events 10000 --queries 200 --top-k 5 --rebuild-index
 uv run python -m tools.play                        # playable headless MVP
