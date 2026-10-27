@@ -51,6 +51,7 @@ class PolicyDecisionRecord:
     event_refs: tuple[int, ...]
     rationale: str
     fallback_used: bool
+    schema_version: str = "policy-decision-record.v1"
 
 
 class DecisionModel(Protocol):
