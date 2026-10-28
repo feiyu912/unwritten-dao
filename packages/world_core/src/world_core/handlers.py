@@ -516,7 +516,7 @@ def handle_attack(state: WorldState, actor: Npc, arguments: dict[str, Any], emit
             target.inventory.remove(stolen_item)
             actor.inventory.append(stolen_item)
             state.items[stolen_item].owner_id = actor.npc_id
-        if target.health <= 0.15 and intent == "kill":
+        if target.health <= 0 or (intent == "kill" and target.health <= 0.15):
             target.health = 0.0
             died = True
     else:
