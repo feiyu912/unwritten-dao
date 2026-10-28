@@ -9,6 +9,7 @@ signal events_received(events: Array)
 signal command_completed(result: Dictionary)
 signal dialogue_received(reply: String)
 signal dialogue_action_proposed(intent: String)
+signal decision_received(proposal: Dictionary)
 signal request_failed(message: String)
 signal resync_required()
 
@@ -62,6 +63,9 @@ func send_dialogue(npc_id: String, message: String) -> bool:
 	var payload := {"npc_id": npc_id, "player_id": player_id, "message": message}
 	return _request("/v1/dialogue", "dialogue", payload)
 
+func request_decision(npc_id: String) -> bool:
+	return _request("/v1/agents/%s/decision" % npc_id, "decision")
+
 func submit_dialogue_proposal(proposal: Dictionary) -> bool:
 	if int(proposal.get("observed_world_version", -1)) != state_version:
 		request_failed.emit("NPC action expired; refreshing the world. Please speak again.")
@@ -71,6 +75,15 @@ func submit_dialogue_proposal(proposal: Dictionary) -> bool:
 	if proposal_id.is_empty():
 		request_failed.emit("NPC returned an invalid action proposal.")
 		return false
+	var arguments: Dictionary = proposal.get("arguments", {}).duplicate(true)
+	# Godot parses JSON numbers as floats. Restore only the protocol's known
+	# integer fields when exactly integral; fractional/invalid values stay invalid.
+	var intent := str(proposal.get("intent", ""))
+	var integer_field := "days" if intent == "start_cultivation" else "ticks"
+	if intent in ["start_cultivation", "wait"] and arguments.has(integer_field):
+		var value: Variant = arguments[integer_field]
+		if value is float and is_finite(value) and value == floor(value) and absf(value) <= 3650:
+			arguments[integer_field] = int(value)
 	var command := {
 		"schema_version": "world-command.v1",
 		"command_id": proposal_id,
@@ -80,7 +93,7 @@ func submit_dialogue_proposal(proposal: Dictionary) -> bool:
 		"issued_tick": tick,
 		"expected_state_version": int(proposal["observed_world_version"]),
 		"type": proposal.get("intent"),
-		"arguments": proposal.get("arguments", {}),
+		"arguments": arguments,
 		"source": "agent",
 	}
 	return _request("/v1/commands", "command", command)
@@ -93,6 +106,8 @@ func _request(path: String, kind: String, payload: Dictionary = {}) -> bool:
 	var headers := PackedStringArray()
 	var method: HTTPClient.Method = HTTPClient.METHOD_GET
 	var body := ""
+	if kind == "decision":
+		method = HTTPClient.METHOD_POST
 	if not payload.is_empty():
 		method = HTTPClient.METHOD_POST
 		body = JSON.stringify(payload)
@@ -137,6 +152,8 @@ func _on_request_completed(
 				submit_dialogue_proposal(proposal)
 				dialogue_action_proposed.emit(str(proposal.get("intent", "")))
 			dialogue_received.emit(str(parsed.get("reply_text", "")))
+		"decision":
+			decision_received.emit(parsed)
 		_:
 			request_failed.emit("unknown response kind: %s" % kind)
 

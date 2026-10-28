@@ -44,6 +44,16 @@ func _run() -> void:
 	assert(not client.submit_dialogue_proposal(proposal))
 	assert(client.sent.size() == 2)
 	assert(client.sent[1]["kind"] == "snapshot")
+	for days in [30.0, 1.5]:
+		client.busy = false
+		var numeric: Dictionary = proposal.duplicate(true)
+		numeric["observed_world_version"] = client.state_version
+		numeric["intent"] = "start_cultivation"
+		numeric["arguments"] = {"days": days}
+		assert(client.submit_dialogue_proposal(numeric))
+		var submitted: Variant = client.sent[-1]["payload"]["arguments"]["days"]
+		assert(typeof(submitted) == (TYPE_INT if days == 30.0 else TYPE_FLOAT))
+		assert(submitted == days)
 	client.queue_free()
 	print("DIALOGUE request reservation and stale proposal checks passed (no server)")
 	quit(0)

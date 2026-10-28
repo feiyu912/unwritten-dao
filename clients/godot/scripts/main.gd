@@ -26,6 +26,8 @@ var _voice_npc_id := ""
 var _dialogue_world_id := ""
 var _dialogue_npc_id := ""
 var _record_text := ""
+var _day_runner: AgentDayRunner
+var _resync_requested := false
 
 @onready var world_root: Node3D = $WorldRoot
 @onready var player: CharacterBody3D = $Player
@@ -53,6 +55,16 @@ func _ready() -> void:
 	)
 	client.request_failed.connect(_on_request_failed)
 	client.resync_required.connect(_on_resync_required)
+	_day_runner = AgentDayRunner.new()
+	add_child(_day_runner)
+	_day_runner.configure(client)
+	_day_runner.day_completed.connect(func(_snapshot: Dictionary) -> void:
+		_append_log("[color=#9fe3b0]一天过去了。人物已按各自目标行动。[/color]")
+	)
+	_day_runner.failed.connect(func(message: String) -> void:
+		_append_log("[color=#ff8080]时间推进已中止：%s[/color]" % message)
+		_resync_requested = true
+	)
 	talk_button.pressed.connect(_talk)
 	resync_button.pressed.connect(_resync)
 	dialogue_edit.text_submitted.connect(func(_text: String) -> void: _talk())
@@ -65,10 +77,14 @@ func _process(delta: float) -> void:
 	_move_player(delta)
 	_follow_camera()
 	_location_cooldown = maxf(0.0, _location_cooldown - delta)
+	if _resync_requested:
+		if not client.busy and client.fetch_snapshot():
+			_resync_requested = false
+		return
 	_poll_elapsed += delta
 	if _poll_elapsed >= 1.0:
 		_poll_elapsed = 0.0
-		if not client.busy:
+		if not client.busy and not _day_runner.active:
 			client.fetch_events()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -77,6 +93,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		dialogue_edit.release_focus()
 		return
 	if _editing_or_recording():
+		return
+	if _day_runner.active or _resync_requested:
 		return
 	if event.is_action_pressed("take"):
 		_take()
@@ -134,7 +152,7 @@ func _move_player_to_spawn() -> void:
 	player.position = Vector3(float(xy[0]) * CM_TO_M, 1.0, float(xy[1]) * CM_TO_M)
 
 func _move_player(_delta: float) -> void:
-	if _editing_or_recording():
+	if _editing_or_recording() or _day_runner.active or _resync_requested:
 		player.velocity = Vector3.ZERO
 		return
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
@@ -210,7 +228,7 @@ func _claim() -> void:
 	_append_log("No visible opportunity here.")
 
 func _talk() -> void:
-	if _capture != null and _capture.recording:
+	if _day_runner.active or _resync_requested or (_capture != null and _capture.recording):
 		return
 	var message := dialogue_edit.text.strip_edges()
 	if message.is_empty() or client.player_id.is_empty():
@@ -226,12 +244,15 @@ func _talk() -> void:
 	_append_log("Nobody here to talk to.")
 
 func _next_day() -> void:
-	client.send_command("advance_time", {"ticks": 1}, "")
+	_cancel_voice()
+	if not _day_runner.start():
+		_append_log("请等待当前行动结束，再推进一天。")
 
 func _resync() -> void:
+	_day_runner.cancel()
 	_cancel_voice()
 	_append_log("Resyncing authoritative snapshot…")
-	client.fetch_snapshot()
+	_resync_requested = true
 
 func _on_snapshot(snapshot: Dictionary) -> void:
 	state = snapshot.get("state", {})
@@ -264,7 +285,8 @@ func _on_command_completed(result: Dictionary) -> void:
 	print("command completed version=%d events=%d" % [client.state_version, events.size()])
 	for event in events:
 		_append_log("[color=#9fe3b0]%s[/color]" % str(event.get("type", "")))
-	client.fetch_snapshot()
+	if not _day_runner.active:
+		client.fetch_snapshot()
 
 func _on_dialogue(reply: String) -> void:
 	_append_log("[color=#e9d18a]%s[/color]" % reply)
@@ -349,7 +371,7 @@ func _toggle_recording() -> void:
 	if _capture.recording:
 		_capture.stop_recording()
 		return
-	if client.busy or _voice.busy:
+	if client.busy or _voice.busy or _day_runner.active or _resync_requested:
 		_voice_status.text = "请等待当前交谈或语音完成"
 		return
 	var npc_id := _nearby_npc_id()
