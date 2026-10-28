@@ -1,7 +1,10 @@
 """FastAPI application exposing the authoritative world API.
 
 R1 notes: the WebSocket stream polls the database (0.5s) instead of using an
-in-process pub/sub; LLM-backed dialogue is intentionally absent.
+in-process pub/sub. Dialogue is configured independently via
+``DIALOGUE_PROVIDER`` (empty falls back to ``AGENT_PROVIDER``); compatible
+replies may include an ``ActionProposal``, but only validated commands mutate
+world state.
 """
 
 from __future__ import annotations

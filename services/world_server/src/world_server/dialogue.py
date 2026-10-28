@@ -33,6 +33,40 @@ DIALOGUE_SYSTEM = """\
 """
 
 
+_LLM_MODES = frozenset({"openai", "openai-compatible"})
+
+
+def _dialogue_mode() -> str:
+    """Return DIALOGUE_PROVIDER when set, otherwise the legacy AGENT_PROVIDER.
+
+    An explicitly configured dialogue provider is independent from the agent
+    decision provider, so ``AGENT_PROVIDER=decision-model`` can keep background
+    decisions local while dialogue uses a compatible endpoint.
+    """
+    mode = os.environ.get("DIALOGUE_PROVIDER", "").strip().lower()
+    if mode:
+        return mode
+    return os.environ.get("AGENT_PROVIDER", "utility").strip().lower()
+
+
+def _build_dialogue_provider(*, temperature: float) -> tuple[OpenAICompatibleProvider, str]:
+    base_url = os.environ.get("LLM_BASE_URL", "").strip()
+    model = os.environ.get("LLM_MODEL", "").strip()
+    if not base_url or not model:
+        raise RuntimeError(
+            "dialogue provider 'openai-compatible' requires LLM_BASE_URL and LLM_MODEL "
+            "(from DIALOGUE_PROVIDER or AGENT_PROVIDER)"
+        )
+    provider = OpenAICompatibleProvider(
+        base_url=base_url,
+        model=model,
+        api_key=os.environ.get("LLM_API_KEY"),
+        timeout=float(os.environ.get("LLM_TIMEOUT_SECONDS", "20")),
+        temperature=temperature,
+    )
+    return provider, model
+
+
 def _fallback(npc: Npc) -> str:
     return f"（{npc.name}看了你一眼，没有多说。）"
 
@@ -61,21 +95,13 @@ def build_dialogue_prompt(state: WorldState, npc: Npc, player: Npc, message: str
 
 
 def generate_dialogue_reply(state: WorldState, npc: Npc, player: Npc, message: str) -> str:
-    mode = os.environ.get("AGENT_PROVIDER", "utility").strip().lower()
+    mode = _dialogue_mode()
     if mode == "llm-mock":
         return os.environ.get("LLM_MOCK_DIALOGUE_REPLY") or _fallback(npc)
-    if mode not in {"openai", "openai-compatible"}:
+    if mode not in _LLM_MODES:
         return _fallback(npc)
 
-    base_url = os.environ.get("LLM_BASE_URL")
-    model = os.environ.get("LLM_MODEL")
-    if not base_url or not model:
-        raise RuntimeError("AGENT_PROVIDER=openai requires LLM_BASE_URL and LLM_MODEL")
-    provider = OpenAICompatibleProvider(
-        base_url=base_url,
-        model=model,
-        api_key=os.environ.get("LLM_API_KEY"),
-        timeout=float(os.environ.get("LLM_TIMEOUT_SECONDS", "20")),
+    provider, _ = _build_dialogue_provider(
         temperature=float(os.environ.get("LLM_DIALOGUE_TEMPERATURE", "0.7")),
     )
     try:
@@ -120,17 +146,10 @@ def generate_dialogue_turn(
     No mutation, speculative success, or unrelated utility fallback on a failed
     conversation. Event memories are supplied by the same observation as decisions.
     """
-    mode = os.environ.get("AGENT_PROVIDER", "utility").strip().lower()
-    if mode not in {"openai", "openai-compatible"}:
+    mode = _dialogue_mode()
+    if mode not in _LLM_MODES:
         return DialogueTurn(generate_dialogue_reply(state, npc, player, message), None)
-    base_url, model = os.environ.get("LLM_BASE_URL"), os.environ.get("LLM_MODEL")
-    if not base_url or not model:
-        raise RuntimeError("OpenAI-compatible dialogue requires LLM_BASE_URL and LLM_MODEL")
-    provider = OpenAICompatibleProvider(
-        base_url=base_url,
-        model=model,
-        api_key=os.environ.get("LLM_API_KEY"),
-        timeout=float(os.environ.get("LLM_TIMEOUT_SECONDS", "20")),
+    provider, model = _build_dialogue_provider(
         temperature=float(os.environ.get("LLM_DIALOGUE_TEMPERATURE", "0.7")),
     )
     _, facts = build_planning_prompt(observation)

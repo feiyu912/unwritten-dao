@@ -6,8 +6,11 @@ materials and captures. Its visuals are not evidence that the gameplay slice is 
 
 ## OpenAI-compatible dialogue actions
 
-Configure the **server** environment with `AGENT_PROVIDER=openai-compatible`,
-`LLM_BASE_URL` (including `/v1`), `LLM_MODEL`, and optional `LLM_API_KEY`.
+Configure the **server** environment with `DIALOGUE_PROVIDER=openai-compatible`
+(or leave it empty and set `AGENT_PROVIDER=openai-compatible` to use the legacy
+fallback), `LLM_BASE_URL` (including `/v1`), `LLM_MODEL`, and optional `LLM_API_KEY`.
+The decision and dialogue paths share these `LLM_*` values when both use a model;
+only one endpoint/model is configured, not two independent remote models.
 No credentials belong in the Godot client. Local compatible endpoints can omit a key.
 Dialogue includes the NPC's observations, goals and retrieved event memories. The NPC may
 decline or propose an action; the client submits that proposal to `/v1/commands` with a
@@ -47,13 +50,16 @@ Follow `docs/runbook.md`. In short:
 
 ```bash
 docker compose up -d postgres
-export DATABASE_URL=postgresql+psycopg://postgres:postgres@127.0.0.1:5433/unwritten_dao
-uv run alembic -c services/world_server/alembic.ini upgrade head
-uv run uvicorn world_server.app:app --host 127.0.0.1 --port 8000
+uv run --env-file .env alembic -c services/world_server/alembic.ini upgrade head
+uv run uvicorn --env-file .env world_server.app:app --host 127.0.0.1 --port 8000
 ```
 
-Use the local `.env` for the 5433 port on this machine. Seed a world if the database is empty:
-`uv run python -m tools.seed_history --years 1 --reset`.
+`docker compose` reads `.env` automatically; the other commands load it explicitly. Use the
+local `.env` to select a non-default port such as 5433 on this machine. If you intentionally
+run without `.env`, omit `--env-file .env` and export `DATABASE_URL` (defaults to
+`127.0.0.1:5432`); on Windows, `pwsh -File tools/start_world_server.ps1` starts the server
+after requiring `.env`. Seed a world if the database is empty:
+`uv run --env-file .env python -m tools.seed_history --years 1 --reset`.
 
 ## Run the client
 

@@ -8,10 +8,15 @@ versioned HTTP/WS contract in `docs/contracts/api.openapi.yaml`.
 
 ```bash
 docker compose up -d postgres      # reads .env (POSTGRES_PORT, credentials)
-export DATABASE_URL=postgresql+psycopg://postgres:postgres@127.0.0.1:5433/unwritten_dao
-uv run alembic -c services/world_server/alembic.ini upgrade head
-uv run uvicorn world_server.app:app --port 8000
+# Copy .env.example to .env first if you have not already (keep an existing file).
+uv run --env-file .env alembic -c services/world_server/alembic.ini upgrade head
+uv run uvicorn --env-file .env world_server.app:app --host 127.0.0.1 --port 8000
 ```
+
+If you intentionally run without `.env`, omit `--env-file .env` from the last two commands
+and export `DATABASE_URL` (or use the `127.0.0.1:5432` default). `uvicorn --env-file` only
+loads the file for that server process; Alembic and DB-backed tools need `uv run --env-file .env`.
+On Windows, `tools/start_world_server.ps1` loads `.env` for the server but requires the file.
 
 The app bootstraps the `seed=42` world on startup if the database is empty.
 
@@ -19,9 +24,11 @@ The app bootstraps the `seed=42` world on startup if the database is empty.
 
 ```bash
 docker compose up -d postgres
-uv run alembic -c services/world_server/alembic.ini upgrade head
-uv run pytest services/world_server/tests -m integration -q
+uv run --env-file .env alembic -c services/world_server/alembic.ini upgrade head
+uv run --env-file .env pytest services/world_server/tests -m integration -q
 ```
+
+If there is no `.env`, omit `--env-file .env` and export the same environment variables.
 
 CI runs the same suite against an ephemeral pgvector service container. Do not substitute
 SQLite; JSONB semantics and `CREATE EXTENSION vector` are part of the schema contract.
@@ -30,10 +37,11 @@ SQLite; JSONB semantics and `CREATE EXTENSION vector` are part of the schema con
 
 | Env | Values | Meaning |
 |---|---|---|
-| `AGENT_PROVIDER` | `utility` (default), `llm-mock`, `openai`, `replay`, `decision-model` | decision policy for the six major roles; `decision-model` stores candidate/mask samples |
-| `LLM_BASE_URL` / `LLM_MODEL` / `LLM_API_KEY` | — | required for `openai` |
+| `AGENT_PROVIDER` | `utility` (default), `llm-mock`, `openai`, `openai-compatible`, `replay`, `decision-model` | decision policy for the six major roles; `decision-model` stores candidate/mask samples |
+| `DIALOGUE_PROVIDER` | `utility`, `llm-mock`, `openai`, `openai-compatible`, empty (default) | dialogue-only override; empty falls back to `AGENT_PROVIDER`; other values use deterministic text; it does not change background decisions |
+| `LLM_BASE_URL` / `LLM_MODEL` / `LLM_API_KEY` | — | required for `openai`/`openai-compatible`; decisions and dialogue share these values, so two model paths use one endpoint/model, not two independent remote models |
 | `EMBEDDING_PROVIDER` | `off` (default), `hash`, `openai` | memory vector indexing; `hash` is for offline plumbing tests |
-| `EMBEDDING_BASE_URL` / `EMBEDDING_MODEL` / `EMBEDDING_API_KEY` | — | required for `openai` embeddings (dimension must be 768) |
+| `EMBEDDING_BASE_URL` / `EMBEDDING_MODEL` / `EMBEDDING_API_KEY` | — | required for `openai` embeddings (dimension must be 768; base URL/key may fall back to `LLM_*`) |
 
 Embedding failures are logged and the memory row is stored without a vector; the world command
 transaction never fails because of an index error.
@@ -51,9 +59,14 @@ transaction never fails because of an index error.
 
 ## R1 limitations
 
-- `/v1/dialogue` uses the configured provider (`llm-mock` or `openai`) and falls back to a
-  deterministic in-character line when no provider is configured or the call fails.
+- `/v1/dialogue` resolves `DIALOGUE_PROVIDER` first, then falls back to `AGENT_PROVIDER`.
+  `openai`/`openai-compatible` uses the shared `LLM_*` endpoint and may return an
+  `ActionProposal`; that proposal is only a suggestion and must be submitted through
+  `/v1/commands`, where normal validation applies. Other modes use a deterministic
+  in-character line.
+- Speech (ASR/TTS) and real remote-model quality/latency remain unaccepted; current tests
+  use local stubs and synthetic audio, with no default cloud endpoint or model.
 - Committed events write `memory_episode` rows and observations retrieve the top-5 ranked
-  episodes. Embeddings remain null; retrieval is deterministic lexical scoring until an
-  embedding provider is configured.
+  episodes. Embeddings remain null by default; retrieval is deterministic lexical scoring
+  until an embedding provider is configured.
 - Single-world, single-process; no auth.
