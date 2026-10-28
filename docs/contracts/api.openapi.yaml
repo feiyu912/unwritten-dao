@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Unwritten Dao World API
-  version: "1.0.0"
+  version: "1.1.0"
   description: >
     Versioned contract between the authoritative world server and any client.
     Clients submit commands and read authoritative state; they never simulate
@@ -188,6 +188,84 @@ paths:
         "422":
           $ref: "#/components/responses/BadRequest"
 
+  /v1/voice/transcriptions:
+    post:
+      operationId: transcribeVoice
+      description: >
+        Optional speech-to-text transport only; never changes authoritative world state.
+        Accepts raw nonempty PCM WAV with 16-bit samples, one or two channels,
+        8000-48000 Hz, at most 30 seconds and 6291456 bytes including headers.
+        The provider is configured on the server; no client credentials are accepted.
+      requestBody:
+        required: true
+        content:
+          audio/wav:
+            schema:
+              type: string
+              format: binary
+              description: Raw WAV bytes; not base64 or multipart.
+            x-max-bytes: 6291456
+            x-max-duration-seconds: 30
+      responses:
+        "200":
+          description: Nonempty transcript; the player may edit before submitting dialogue.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [text]
+                properties:
+                  text: { type: string, minLength: 1, maxLength: 2000, pattern: '\S' }
+        "413":
+          $ref: "#/components/responses/VoiceTooLarge"
+        "415":
+          $ref: "#/components/responses/VoiceUnsupportedAudio"
+        "422":
+          $ref: "#/components/responses/VoiceInvalidInput"
+        "502":
+          $ref: "#/components/responses/VoiceProviderFailed"
+        "503":
+          $ref: "#/components/responses/VoiceNotConfigured"
+        "504":
+          $ref: "#/components/responses/VoiceProviderTimeout"
+
+  /v1/voice/speech:
+    post:
+      operationId: synthesizeVoice
+      description: >
+        Optional text-to-speech transport only; never executes a proposal or changes
+        world state. Synthesized speech must be identified as synthetic in the client.
+        A playback failure must not repeat a dialogue request or world command.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [text]
+              properties:
+                text: { type: string, minLength: 1, maxLength: 2000, pattern: '\S' }
+      responses:
+        "200":
+          description: >
+            Raw nonempty PCM WAV, 16-bit, one or two channels, 8000-48000 Hz,
+            at most 120 seconds and 12582912 bytes including headers.
+          content:
+            audio/wav:
+              schema: { type: string, format: binary }
+              x-max-bytes: 12582912
+              x-max-duration-seconds: 120
+        "422":
+          $ref: "#/components/responses/VoiceInvalidInput"
+        "502":
+          $ref: "#/components/responses/VoiceProviderFailed"
+        "503":
+          $ref: "#/components/responses/VoiceNotConfigured"
+        "504":
+          $ref: "#/components/responses/VoiceProviderTimeout"
+
   /v1/saves:
     post:
       operationId: createSave
@@ -277,6 +355,36 @@ x-websocket:
 
 components:
   responses:
+    VoiceTooLarge:
+      description: audio_too_large; input byte or duration limit exceeded.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/VoiceError" }
+    VoiceUnsupportedAudio:
+      description: unsupported_audio; wrong MIME type, PCM format, channels or sample rate.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/VoiceError" }
+    VoiceInvalidInput:
+      description: invalid_audio or invalid_text; malformed/empty WAV or invalid JSON/text.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/VoiceError" }
+    VoiceProviderFailed:
+      description: speech_provider_failed; upstream error or invalid/oversized provider output.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/VoiceError" }
+    VoiceNotConfigured:
+      description: speech_not_configured; required provider URL, model or voice is absent.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/VoiceError" }
+    VoiceProviderTimeout:
+      description: speech_provider_timeout; provider deadline exceeded.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/VoiceError" }
     BadRequest:
       description: Invalid or rejected command
       content:
@@ -296,6 +404,23 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
   schemas:
+    VoiceError:
+      type: object
+      additionalProperties: false
+      required: [code, message, details]
+      properties:
+        code:
+          type: string
+          enum:
+            - audio_too_large
+            - unsupported_audio
+            - invalid_audio
+            - invalid_text
+            - speech_provider_failed
+            - speech_not_configured
+            - speech_provider_timeout
+        message: { type: string }
+        details: { type: object }
     Error:
       type: object
       required: [code, message]
