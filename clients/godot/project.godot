@@ -13,6 +13,10 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 boot_splash/bg_color=Color(0.04, 0.05, 0.07, 1)
 boot_splash/show_image=false
 
+[audio]
+
+driver/enable_input=true
+
 [display]
 
 window/size/viewport_width=1280

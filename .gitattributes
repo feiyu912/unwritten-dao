@@ -1,0 +1,3 @@
+# Layout manifests verify exact bytes across platforms.
+clients/unreal/Content/Layout/mvp_scene.json text eol=lf
+clients/godot/layout/mvp_scene.json text eol=lf

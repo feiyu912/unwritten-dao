@@ -1,5 +1,38 @@
 # Godot vertical slice
 
+This project validates gameplay and authoritative server integration. The separate local
+`../godot-art/project.godot` project preserves the courtyard art, retargeted animations,
+materials and captures. Its visuals are not evidence that the gameplay slice is integrated.
+
+## OpenAI-compatible dialogue actions
+
+Configure the **server** environment with `AGENT_PROVIDER=openai-compatible`,
+`LLM_BASE_URL` (including `/v1`), `LLM_MODEL`, and optional `LLM_API_KEY`.
+No credentials belong in the Godot client. Local compatible endpoints can omit a key.
+Dialogue includes the NPC's observations, goals and retrieved event memories. The NPC may
+decline or propose an action; the client submits that proposal to `/v1/commands` with a
+stable idempotency key. Only accepted command events and refreshed snapshots confirm a
+world change. A stale proposal is discarded and requires another conversation.
+
+Voice controls are optional: click **录音**, then **停止录音** (automatic stop after
+30 seconds). Review/edit the transcript and click Talk to send it. **取消语音** discards
+pending audio, and **播放 NPC 合成语音** opts into synthetic reply playback (off by default).
+Typing and recording suspend movement shortcuts; Esc returns to walking.
+
+Configure ASR independently on the server with `ASR_BASE_URL`, `ASR_MODEL`, and optional
+`ASR_API_KEY`. Configure TTS with `TTS_BASE_URL`, `TTS_MODEL`, `TTS_VOICE`, and optional
+`TTS_API_KEY`. URLs include `/v1`; there are no default cloud endpoints or models.
+Providers must support 16-bit PCM WAV. Missing speech configuration leaves text dialogue usable.
+No audio is stored by default. Cancelling audio does not undo a world command already submitted.
+
+The new voice path is tested using synthetic WAV and localhost substitutes, including actual
+Godot HTTP transport. Real microphone input, recognition/pronunciation quality and latency
+still need configured providers and manual acceptance. Persistent conversational commitments
+and integration with the separate art project remain pending.
+
+Optional transport regression test (requires Godot on PATH or `GODOT_BIN`):
+`uv run pytest tests/e2e/test_godot_voice_http.py`.
+
 A lightweight Godot 4.7.2 client for the authoritative world server. This is an **additive**
 presentation layer: the UE5 scaffold remains, and neither client owns simulation truth.
 

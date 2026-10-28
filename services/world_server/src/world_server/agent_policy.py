@@ -69,7 +69,7 @@ def build_policy() -> PolicySelection:
             "decision-model",
             DecisionModelPolicy(UtilityScoringModel(), name="utility-scoring"),
         )
-    if mode == "openai":
+    if mode in {"openai", "openai-compatible"}:
         base_url = os.environ.get("LLM_BASE_URL")
         model = os.environ.get("LLM_MODEL")
         if not base_url or not model:

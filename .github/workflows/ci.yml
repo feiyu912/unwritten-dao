@@ -51,7 +51,7 @@ jobs:
         run: uv run mypy
 
       - name: GDScript lint
-        run: uvx --from gdtoolkit==4.5.0 gdlint clients/godot/scripts clients/godot/tests/smoke_server.gd clients/godot/tests/key_item_loop.gd
+        run: uvx --from gdtoolkit==4.5.0 gdlint clients/godot/scripts clients/godot/tests
 
       - name: Unit tests
         run: uv run pytest packages services tests clients/unreal/tools clients/godot/tests -m "not integration and not slow" -q

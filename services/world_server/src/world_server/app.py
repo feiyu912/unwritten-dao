@@ -32,7 +32,7 @@ from world_core import snapshot as core_snapshot
 from world_server.agent_policy import policy_for
 from world_server.config import SETTINGS
 from world_server.db import get_engine, get_session_factory, session_dependency
-from world_server.dialogue import generate_dialogue_reply
+from world_server.dialogue import generate_dialogue_turn
 from world_server.memory_store import retrieve_memories
 from world_server.repository import (
     IdempotencyConflict,
@@ -49,6 +49,7 @@ from world_server.repository import (
     save_policy_decisions,
     save_snapshot,
 )
+from world_server.speech_routes import router as speech_router
 from world_server.summaries import summarize_event
 
 SessionDep = Annotated[Session, Depends(session_dependency)]
@@ -74,7 +75,10 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Unwritten Dao World API", version="1.0.0", lifespan=_lifespan)
+    app = FastAPI(title="Unwritten Dao World API", version="1.1.0", lifespan=_lifespan)
+    # APIRouter has already applied /v1/voice to these concrete APIRoutes.
+    # Register them directly so the versioned contract audit can inspect paths.
+    app.router.routes.extend(speech_router.routes)
 
     @app.exception_handler(CommandRejected)
     async def _rejected(_request: Any, exc: CommandRejected) -> JSONResponse:
@@ -227,14 +231,38 @@ def create_app() -> FastAPI:
         player = state.npcs.get(str(payload.get("player_id") or state.player_id))
         if player is None:
             raise NotFound("unknown player")
+        if not player.alive:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "player_dead", "message": "speaker must be alive"},
+            )
+        observation = _observation(session, state, npc.npc_id)
+        # Inference must not hold the world's database write lock.
+        session.rollback()
         try:
-            reply = generate_dialogue_reply(state, npc, player, message.strip()[:2000])
+            turn = generate_dialogue_turn(
+                state,
+                npc,
+                player,
+                message.strip()[:2000],
+                observation,
+            )
         except RuntimeError as exc:
             raise HTTPException(
                 status_code=503,
                 detail={"code": "agent_provider_misconfigured", "message": str(exc)},
             ) from exc
-        return {"reply_text": reply, "proposal": None}
+        if turn.record is not None:
+            save_decisions(
+                session,
+                world_id=state.world_id,
+                records=[turn.record],
+                proposal=turn.proposal,
+            )
+        return {
+            "reply_text": turn.reply_text,
+            "proposal": turn.proposal.model_dump(mode="json") if turn.proposal else None,
+        }
 
     @app.post("/v1/saves", status_code=201)
     def create_save(session: SessionDep, payload: dict[str, Any] | None = None) -> dict[str, Any]:

@@ -8,6 +8,7 @@ signal snapshot_received(snapshot: Dictionary)
 signal events_received(events: Array)
 signal command_completed(result: Dictionary)
 signal dialogue_received(reply: String)
+signal dialogue_action_proposed(intent: String)
 signal request_failed(message: String)
 signal resync_required()
 
@@ -24,7 +25,7 @@ var _http: HTTPRequest
 
 func _ready() -> void:
 	_http = HTTPRequest.new()
-	_http.timeout = 15.0
+	_http.timeout = 45.0
 	add_child(_http)
 	_http.request_completed.connect(_on_request_completed)
 
@@ -60,6 +61,29 @@ func send_dialogue(npc_id: String, message: String) -> bool:
 		return false
 	var payload := {"npc_id": npc_id, "player_id": player_id, "message": message}
 	return _request("/v1/dialogue", "dialogue", payload)
+
+func submit_dialogue_proposal(proposal: Dictionary) -> bool:
+	if int(proposal.get("observed_world_version", -1)) != state_version:
+		request_failed.emit("NPC action expired; refreshing the world. Please speak again.")
+		fetch_snapshot()
+		return false
+	var proposal_id := str(proposal.get("proposal_id", ""))
+	if proposal_id.is_empty():
+		request_failed.emit("NPC returned an invalid action proposal.")
+		return false
+	var command := {
+		"schema_version": "world-command.v1",
+		"command_id": proposal_id,
+		"idempotency_key": "dialogue:" + proposal_id,
+		"world_id": world_id,
+		"actor_id": proposal.get("npc_id"),
+		"issued_tick": tick,
+		"expected_state_version": int(proposal["observed_world_version"]),
+		"type": proposal.get("intent"),
+		"arguments": proposal.get("arguments", {}),
+		"source": "agent",
+	}
+	return _request("/v1/commands", "command", command)
 
 func _request(path: String, kind: String, payload: Dictionary = {}) -> bool:
 	if busy:
@@ -107,6 +131,11 @@ func _on_request_completed(
 			state_version = int(result.get("state_version", state_version))
 			command_completed.emit(result)
 		"dialogue":
+			var proposal: Variant = parsed.get("proposal")
+			if proposal is Dictionary:
+				# Reserve the request before callbacks/polling can start another one.
+				submit_dialogue_proposal(proposal)
+				dialogue_action_proposed.emit(str(proposal.get("intent", "")))
 			dialogue_received.emit(str(parsed.get("reply_text", "")))
 		_:
 			request_failed.emit("unknown response kind: %s" % kind)
