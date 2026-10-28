@@ -48,7 +48,9 @@ def test_collect_writes_valid_jsonl(tmp_path) -> None:
 
     path = tmp_path / "decisions.jsonl"
     count = write_jsonl(path, recorder.samples)
-    rows = [json.loads(line) for line in path.read_text().splitlines() if line]
+    # write_jsonl emits UTF-8 JSONL; decode explicitly so the Windows locale
+    # code page (cp936) cannot reinterpret the bytes.
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
     assert count == len(rows) == len(recorder.samples)
     assert rows[0]["schema_version"] == "decision-sample.v1"
     assert rows[0]["available_actions"]

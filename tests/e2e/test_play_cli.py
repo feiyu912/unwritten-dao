@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import pathlib
 import subprocess
 import sys
@@ -13,11 +14,16 @@ SCRIPT = (
 
 
 def test_play_cli_script_reaches_the_pill() -> None:
+    # The CLI prints Chinese text: force the child's stdio to UTF-8 and decode
+    # the pipes as UTF-8 instead of the Windows locale code page (cp936).
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
     result = subprocess.run(
         [sys.executable, "-m", "tools.play", "--script", SCRIPT],
         cwd=ROOT,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        env=env,
         timeout=120,
     )
     assert result.returncode == 0, result.stderr
