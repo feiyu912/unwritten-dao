@@ -21,7 +21,7 @@ def test_server_samples_export_to_jsonl(session: Any, tmp_path: Any, monkeypatch
 
     path = tmp_path / "samples.jsonl"
     count = export_samples(session, path)
-    rows = [json.loads(line) for line in path.read_text().splitlines() if line]
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
     assert count == len(rows) == 1
     sample = rows[0]
     assert sample["schema_version"] == "policy-decision-record.v1"

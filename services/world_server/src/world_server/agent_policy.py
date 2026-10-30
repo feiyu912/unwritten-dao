@@ -22,6 +22,7 @@ from agent_runtime import (
     UtilityPolicy,
     UtilityScoringModel,
 )
+from world_server.config import provider_extra_headers
 
 MAJOR_ROLES = frozenset(
     {"player", "protagonist", "sect_leader", "enemy_leader", "alchemist_elder", "rival"}
@@ -82,6 +83,8 @@ def build_policy() -> PolicySelection:
                     model=model,
                     api_key=os.environ.get("LLM_API_KEY"),
                     timeout=float(os.environ.get("LLM_TIMEOUT_SECONDS", "20")),
+                    extra_headers=provider_extra_headers(),
+                    reasoning_effort=os.environ.get("LLM_REASONING_EFFORT", "").strip() or None,
                 ),
                 model_version=os.environ.get("LLM_MODEL_VERSION", model),
             ),

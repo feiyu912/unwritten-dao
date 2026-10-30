@@ -80,6 +80,14 @@ def test_command_lifecycle_happy_idempotent_stale(client: TestClient) -> None:
     assert conflict.status_code in {409, 422}
 
 
+def test_non_uuid_command_id_returns_422(client: TestClient) -> None:
+    payload = _move_command(client, 0, 0, key="api:bad-id")
+    payload["command_id"] = "not-a-uuid"
+    response = client.post("/v1/commands", json=payload)
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "invalid_command"
+
+
 def test_observation_and_decision_endpoints(client: TestClient) -> None:
     observation = client.get(f"/v1/npcs/{PROTAGONIST_ID}/observation")
     assert observation.status_code == 200

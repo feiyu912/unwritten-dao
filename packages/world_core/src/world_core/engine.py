@@ -11,6 +11,7 @@ from world_core.handlers import (
     handle_claim_opportunity,
     handle_enter_secret_realm,
     handle_investigate,
+    handle_make_commitment,
     handle_move,
     handle_start_cultivation,
     handle_transfer_item,
@@ -31,6 +32,7 @@ _HANDLERS = {
     "enter_secret_realm": handle_enter_secret_realm,
     "claim_opportunity": handle_claim_opportunity,
     "attack": handle_attack,
+    "make_commitment": handle_make_commitment,
 }
 
 
@@ -144,7 +146,46 @@ def _process_tick(state: WorldState, emit: Emitter) -> None:
         _settle_factions(state, emit)
     _expire_realms(state, emit)
     _expire_opportunities(state, emit)
+    _expire_commitments(state, emit)
     expire_obsolete_goals(state)
+
+
+def _expire_commitments(state: WorldState, emit: Emitter) -> None:
+    for npc_key in sorted(state.npcs):
+        npc = state.npcs[npc_key]
+        for goal in sorted(npc.goals, key=lambda item: item.goal_id):
+            if goal.kind != "commitment" or goal.status != "active":
+                continue
+            until_tick = goal.params.get("until_tick")
+            if not isinstance(until_tick, int) or state.tick <= until_tick:
+                continue
+            goal.status = "failed"
+            goal.last_updated_tick = state.tick
+            promised = next(
+                (
+                    item
+                    for item in npc.goals
+                    if item.goal_id == goal.params.get("promised_goal_id")
+                ),
+                None,
+            )
+            if promised is not None:
+                promised.params.pop("deferred_until_tick", None)
+                promised.last_updated_tick = state.tick
+            counterparty = goal.params.get("with_npc_id")
+            emit(
+                "COMMITMENT_BROKEN",
+                actor_ids=[npc.npc_id],
+                target_ids=[counterparty] if isinstance(counterparty, str) else [],
+                location_id=npc.location_id,
+                rng_seed=seed_for(state, "commitment_broken", npc.npc_id, goal.goal_id),
+                payload={
+                    "commitment_id": goal.goal_id,
+                    "with_npc_id": goal.params.get("with_npc_id"),
+                    "promised_goal_id": goal.params.get("promised_goal_id"),
+                    "until_tick": until_tick,
+                },
+            )
 
 
 def _cultivate_day(state: WorldState, npc: Npc, action: Any) -> None:

@@ -6,6 +6,7 @@ that expose the same shape. Never logs credentials.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 import httpx
@@ -27,6 +28,9 @@ class OpenAICompatibleProvider:
         timeout: float = 20.0,
         temperature: float = 0.2,
         transport: httpx.BaseTransport | None = None,
+        extra_headers: Mapping[str, str] | None = None,
+        user_agent: str = "unwritten-dao/0.1",
+        reasoning_effort: str | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.model = model
@@ -34,6 +38,9 @@ class OpenAICompatibleProvider:
         self.timeout = timeout
         self.temperature = temperature
         self._transport = transport
+        self.extra_headers = dict(extra_headers or {})
+        self.user_agent = user_agent
+        self.reasoning_effort = reasoning_effort
 
     def complete(self, *, system: str, user: str) -> str:
         return self._chat(system=system, user=user, json_mode=True)
@@ -42,9 +49,10 @@ class OpenAICompatibleProvider:
         return self._chat(system=system, user=user, json_mode=False)
 
     def _chat(self, *, system: str, user: str, json_mode: bool) -> str:
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json", "User-Agent": self.user_agent}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
+        headers.update(self.extra_headers)
         body: dict[str, Any] = {
             "model": self.model,
             "temperature": self.temperature,
@@ -55,6 +63,8 @@ class OpenAICompatibleProvider:
         }
         if json_mode:
             body["response_format"] = {"type": "json_object"}
+        if self.reasoning_effort:
+            body["reasoning_effort"] = self.reasoning_effort
         try:
             with httpx.Client(
                 timeout=self.timeout,

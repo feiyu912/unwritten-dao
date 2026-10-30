@@ -6,6 +6,7 @@ import time
 
 import pytest
 from jsonschema import Draft202012Validator, FormatChecker
+from pydantic import ValidationError
 
 from world_core import (
     FACTION_XUANYUE,
@@ -21,6 +22,7 @@ from world_core import (
     PROTAGONIST_ID,
     REALM_ANCIENT_CAVE,
     CommandRejected,
+    WorldCommand,
     advance_time,
     apply_command,
     create_world,
@@ -363,6 +365,19 @@ def test_combat_death_blocks_further_actions() -> None:
             ),
         )
     assert error.value.code == "actor_dead"
+
+
+def test_command_rejects_non_uuid_identifiers() -> None:
+    state = create_world(42)
+    command = make_command(
+        state,
+        PROTAGONIST_ID,
+        "move",
+        {"to_location_id": LOC_BLACKWOOD_FOREST},
+    ).model_dump()
+    command["command_id"] = "not-a-uuid"
+    with pytest.raises(ValidationError):
+        WorldCommand.model_validate(command)
 
 
 def test_genesis_belief_events_are_queryable_and_valid() -> None:

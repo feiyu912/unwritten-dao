@@ -43,6 +43,45 @@ def test_openai_compatible_provider_sends_expected_request() -> None:
     assert body["response_format"] == {"type": "json_object"}
 
 
+def test_openai_compatible_provider_sends_extra_headers_and_user_agent() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["session"] = request.headers.get("x-opencode-session")
+        captured["ua"] = request.headers.get("user-agent")
+        return httpx.Response(200, json=_completion("{}"))
+
+    provider = OpenAICompatibleProvider(
+        base_url="http://127.0.0.1:8080/v1",
+        model="m",
+        api_key="secret-token",
+        extra_headers={"x-opencode-session": "conversation-1"},
+        transport=httpx.MockTransport(handler),
+    )
+    provider.complete(system="s", user="u")
+
+    assert captured["session"] == "conversation-1"
+    assert captured["ua"] == "unwritten-dao/0.1"
+
+
+def test_openai_compatible_provider_sends_reasoning_effort_when_configured() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["body"] = json.loads(request.content)
+        return httpx.Response(200, json=_completion("{}"))
+
+    provider = OpenAICompatibleProvider(
+        base_url="http://127.0.0.1:8080/v1",
+        model="m",
+        reasoning_effort="none",
+        transport=httpx.MockTransport(handler),
+    )
+    provider.complete(system="s", user="u")
+
+    assert captured["body"]["reasoning_effort"] == "none"
+
+
 def test_openai_compatible_provider_omits_authorization_without_key() -> None:
     captured: dict[str, object] = {}
 

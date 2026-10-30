@@ -113,6 +113,66 @@ def test_dialogue_transfer_is_only_real_after_command_and_replays(inference) -> 
     assert state_checksum(replay) == state_checksum(state)
 
 
+def test_flat_proposal_beside_reply_text_is_accepted(inference) -> None:
+    replies, _ = inference
+    state = _world()
+    npc, player = state.npcs[PROTAGONIST_ID], state.npcs[state.player_id]
+    replies.append(
+        json.dumps(
+            {
+                "reply_text": "我愿将护符赠你。",
+                "intent": "transfer_item",
+                "arguments": {
+                    "item_id": "item_talisman",
+                    "from": {"kind": "npc", "id": npc.npc_id},
+                    "to": {"kind": "npc", "id": player.npc_id},
+                },
+                "rationale_short": "赠予护符",
+                "confidence": 0.6,
+            },
+            ensure_ascii=False,
+        )
+    )
+    turn = generate_dialogue_turn(
+        state, npc, player, "能赠我护符吗？", build_observation(state, npc.npc_id)
+    )
+    assert turn.record is not None and turn.record.accepted
+    assert turn.proposal is not None and turn.proposal.npc_id == npc.npc_id
+    result = apply_command(state, proposal_to_command(state, turn.proposal))
+    assert any(e.type == "ITEM_TRANSFERRED" for e in result.events)
+    assert state.items["item_talisman"].owner_id == player.npc_id
+
+
+@pytest.mark.parametrize("label", [None, "talk", "chat", "advise", "reply_only"])
+def test_flat_non_action_label_is_conversation_only(inference, label: str | None) -> None:
+    replies, _ = inference
+    state = _world()
+    before = state_checksum(state)
+    npc = state.npcs[PROTAGONIST_ID]
+    replies.append(
+        json.dumps(
+            {
+                "reply_text": "只是闲聊，道友不必多心。",
+                "intent": label,
+                "arguments": {},
+                "proposal": None,
+            },
+            ensure_ascii=False,
+        )
+    )
+    turn = generate_dialogue_turn(
+        state,
+        npc,
+        state.npcs[state.player_id],
+        "随便聊聊",
+        build_observation(state, npc.npc_id),
+    )
+    assert turn.reply_text == "只是闲聊，道友不必多心。"
+    assert turn.proposal is None
+    assert turn.record is not None and turn.record.accepted
+    assert state_checksum(state) == before
+
+
 @pytest.mark.parametrize(
     "output",
     [

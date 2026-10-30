@@ -24,6 +24,7 @@ ProposalIntent = Literal[
     "enter_secret_realm",
     "claim_opportunity",
     "attack",
+    "make_commitment",
 ]
 
 PROPOSAL_INTENTS: tuple[ProposalIntent, ...] = (
@@ -36,6 +37,7 @@ PROPOSAL_INTENTS: tuple[ProposalIntent, ...] = (
     "enter_secret_realm",
     "claim_opportunity",
     "attack",
+    "make_commitment",
 )
 
 GoalStatus = Literal["active", "achieved", "failed", "abandoned"]

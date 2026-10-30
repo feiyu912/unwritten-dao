@@ -19,6 +19,7 @@ from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from agent_runtime import (
@@ -143,7 +144,18 @@ def create_app() -> FastAPI:
 
     @app.post("/v1/commands")
     def submit_command(session: SessionDep, command: dict[str, Any]) -> dict[str, Any]:
-        parsed = WorldCommand.model_validate(command)
+        try:
+            parsed = WorldCommand.model_validate(command)
+        except ValidationError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "invalid_command",
+                    "errors": exc.errors(
+                        include_url=False, include_context=False, include_input=False
+                    ),
+                },
+            ) from None
         return apply_command(session, parsed).model_dump(mode="json")
 
     @app.post("/v1/agents/{npc_id}/decision")
