@@ -29,23 +29,27 @@ uv run python -m tools.demo_causal --days 7300    # baseline vs stolen-map, 20 y
 uv run python -m tools.report_history --days 400   # causal coverage + goal outcome
 uv run python -m tools.character_history --npc 沈砚 --years 20  # one life timeline
 uv run python -m tools.export_dashboard --years 20  # self-contained HTML history dashboard
-uv run python -m tools.export_dashboard --from-db  # render the persisted server world
+uv run --env-file .env python -m tools.export_dashboard --from-db  # render the persisted server world
 uv run python -m tools.replay_decisions --days 30    # record model proposals, replay without a model
 uv run python -m tools.collect_decisions --days 10   # JSONL dataset for future BC/RL
 uv run python -m tools.decision_quality reports/decisions_dataset.jsonl  # trajectory summary
 uv run python -m tools.ending_report --days 365      # key-item/conflict endings from real events
-uv run python -m tools.seed_history --years 20 --reset  # persist a 20-year agent history (local DB)
-uv run python -m tools.bench_memory --events 10000 --queries 200 --top-k 5 --rebuild-index
+uv run --env-file .env python -m tools.seed_history --years 20 --reset  # persist a 20-year agent history (local DB)
+uv run --env-file .env python -m tools.bench_memory --events 10000 --queries 200 --top-k 5 --rebuild-index
 uv run python -m tools.play                        # playable headless MVP
-uv run uvicorn world_server.app:app --port 8000    # HTTP/WS server (needs PostgreSQL)
+uv run uvicorn --env-file .env world_server.app:app --port 8000    # HTTP/WS server (needs PostgreSQL)
 ```
+
+DB-backed commands above load `.env` explicitly; `uvicorn --env-file` only affects that server
+process. Copy `.env.example` to `.env` first (keep an existing file), or omit `--env-file` and
+export the variables to use the defaults. `tools/start_world_server.ps1` requires `.env`.
 
 PostgreSQL integration tests (optional locally):
 
 ```bash
 docker compose up -d postgres
-uv run alembic -c services/world_server/alembic.ini upgrade head
-uv run pytest -m integration
+uv run --env-file .env alembic -c services/world_server/alembic.ini upgrade head
+uv run --env-file .env pytest -m integration
 ```
 
 ## Security (MVP)

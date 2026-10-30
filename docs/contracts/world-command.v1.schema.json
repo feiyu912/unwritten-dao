@@ -36,7 +36,8 @@
         "investigate",
         "enter_secret_realm",
         "claim_opportunity",
-        "attack"
+        "attack",
+        "make_commitment"
       ]
     },
     "arguments": { "type": "object" },
@@ -134,9 +135,39 @@
           "arguments": { "$ref": "#/$defs/attackArgs" }
         }
       }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "make_commitment" } },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "actor_id": { "type": "string", "format": "uuid" },
+          "arguments": { "$ref": "#/$defs/commitmentArgs" }
+        }
+      }
     }
   ],
   "$defs": {
+    "commitmentArgs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "with_npc_id",
+        "promised_goal_id",
+        "target_location_id",
+        "until_ticks",
+        "terms"
+      ],
+      "properties": {
+        "with_npc_id": { "type": "string", "format": "uuid" },
+        "promised_goal_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "target_location_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "until_ticks": { "type": "integer", "minimum": 1, "maximum": 365 },
+        "terms": { "type": "string", "minLength": 1, "maxLength": 200 }
+      }
+    },
     "entityRef": {
       "type": "object",
       "additionalProperties": false,

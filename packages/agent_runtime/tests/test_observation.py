@@ -107,7 +107,9 @@ def test_initial_observation_matches_contract_and_hides_secrets() -> None:
     assert observation.schema_version == "npc-observation.v1"
     assert observation.location_id == state.npcs[PROTAGONIST_ID].location_id
     assert [row.item_id for row in observation.inventory] == ["item_talisman"]
-    assert len(observation.available_actions) == 9
+    # Contract 1.2.0 adds the world-authoritative make_commitment intent.
+    assert len(observation.available_actions) == 10
+    assert "make_commitment" in observation.available_actions
 
     known = {row.location_id for row in observation.known_locations}
     assert LOC_ANCIENT_CAVE not in known

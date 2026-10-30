@@ -233,7 +233,8 @@
           "investigate",
           "enter_secret_realm",
           "claim_opportunity",
-          "attack"
+          "attack",
+          "make_commitment"
         ]
       },
       "uniqueItems": true

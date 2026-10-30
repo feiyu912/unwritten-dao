@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from world_core.events import WorldEvent
 
@@ -21,6 +21,7 @@ CommandType = Literal[
     "enter_secret_realm",
     "claim_opportunity",
     "attack",
+    "make_commitment",
 ]
 
 CommandSource = Literal["player", "agent", "system", "replay", "test"]
@@ -39,6 +40,14 @@ class WorldCommand(BaseModel):
     type: CommandType
     arguments: dict[str, Any] = Field(default_factory=dict)
     source: CommandSource = "agent"
+
+    @field_validator("command_id", "world_id", "actor_id")
+    @classmethod
+    def _uuid_identifier(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        uuid.UUID(value)
+        return value
 
 
 class CommandResult(BaseModel):

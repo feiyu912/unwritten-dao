@@ -3,8 +3,8 @@ from __future__ import annotations
 import random
 from typing import Any
 
-from world_core.goal_evolution import apply_breakthrough_goal_progress
-from world_core.models import ActiveAction, Npc, WorldState
+from world_core.goal_evolution import apply_breakthrough_goal_progress, goal_target_id
+from world_core.models import ActiveAction, Goal, Npc, WorldState
 from world_core.rng import seed_for
 from world_core.ruleset import RULESET
 from world_core.support import (
@@ -63,6 +63,90 @@ def handle_wait(state: WorldState, actor: Npc, arguments: dict[str, Any], emit: 
         remaining_ticks=ticks,
         total_ticks=ticks,
     )
+
+
+def _active_commitments(npc: Npc) -> list[Goal]:
+    return [
+        goal
+        for goal in sorted(npc.goals, key=lambda item: item.goal_id)
+        if goal.kind == "commitment" and goal.status == "active"
+    ]
+
+
+def handle_make_commitment(
+    state: WorldState, actor: Npc, arguments: dict[str, Any], emit: Emitter
+) -> None:
+    """Record a bounded, world-authoritative promise between two present NPCs."""
+    require_idle(actor)
+    with_id = require_str(arguments, "with_npc_id")
+    counterparty = state.npcs.get(with_id)
+    if counterparty is None or not counterparty.alive:
+        reject("unknown_counterparty", f"unknown or dead counterparty {with_id}")
+    if counterparty.npc_id == actor.npc_id:
+        reject("self_commitment", "an NPC cannot promise itself")
+    if counterparty.location_id != actor.location_id:
+        reject("not_together", "both actors must be at the same location")
+
+    promised_goal_id = require_str(arguments, "promised_goal_id")
+    promised = next((goal for goal in actor.goals if goal.goal_id == promised_goal_id), None)
+    if promised is None or promised.status != "active":
+        reject("unknown_goal", f"{promised_goal_id} is not an active goal of the actor")
+
+    target_location_id = require_str(arguments, "target_location_id")
+    if target_location_id not in state.locations:
+        reject("unknown_location", f"unknown location {target_location_id}")
+    if target_location_id not in actor.known_locations:
+        reject("unknown_location", "the actor does not know that location")
+
+    until_ticks = require_int(arguments, "until_ticks", 1, 365)
+    terms = arguments.get("terms")
+    if not isinstance(terms, str) or not terms.strip() or len(terms) > 200:
+        reject("invalid_arguments", "terms must be 1..200 characters")
+    if any(
+        goal.params.get("promised_goal_id") == promised_goal_id
+        for goal in _active_commitments(actor)
+    ):
+        reject("duplicate_commitment", "an active promise already covers this goal")
+
+    until_tick = state.tick + until_ticks
+    event_id = emit(
+        "COMMITMENT_MADE",
+        actor_ids=[actor.npc_id],
+        target_ids=[with_id],
+        location_id=actor.location_id,
+        rng_seed=seed_for(
+            state, "commitment", actor.npc_id, promised_goal_id, with_id, state.tick
+        ),
+        payload={
+            "with_npc_id": with_id,
+            "promised_goal_id": promised_goal_id,
+            "target_location_id": target_location_id,
+            "until_tick": until_tick,
+            "terms": terms.strip(),
+        },
+    )
+    commitment_id = f"commitment_{actor.npc_id}_{event_id}"
+    actor.goals.append(
+        Goal(
+            goal_id=commitment_id,
+            kind="commitment",
+            priority=0.85,
+            params={
+                "commitment_id": commitment_id,
+                "with_npc_id": with_id,
+                "promised_goal_id": promised_goal_id,
+                "target_location_id": target_location_id,
+                "until_tick": until_tick,
+                "terms": terms.strip(),
+            },
+            created_tick=state.tick,
+            origin_event_id=event_id,
+            last_updated_tick=state.tick,
+        )
+    )
+    promised.params["deferred_until_tick"] = until_tick
+    promised.params["commitment_id"] = commitment_id
+    promised.last_updated_tick = state.tick
 
 
 def handle_move(state: WorldState, actor: Npc, arguments: dict[str, Any], emit: Emitter) -> None:
@@ -339,6 +423,40 @@ def handle_investigate(
         rng_seed=seed_for(state, "investigate", actor.npc_id, target),
         payload={"focus": arguments.get("focus", "secret_realm"), "location_name": location.name},
     )
+    for goal in _active_commitments(actor):
+        if goal.params.get("target_location_id") != target:
+            continue
+        goal.status = "achieved"
+        goal.last_updated_tick = state.tick
+        promised = next(
+            (
+                item
+                for item in actor.goals
+                if item.goal_id == goal.params.get("promised_goal_id")
+            ),
+            None,
+        )
+        if promised is not None:
+            promised.params.pop("deferred_until_tick", None)
+            promised.params["commitment_fulfilled_tick"] = state.tick
+            promised.last_updated_tick = state.tick
+        counterparty = goal.params.get("with_npc_id")
+        emit(
+            "COMMITMENT_FULFILLED",
+            actor_ids=[actor.npc_id],
+            target_ids=[counterparty] if isinstance(counterparty, str) else [],
+            location_id=target,
+            parents=_unique_event_ids(investigate_id, goal.origin_event_id),
+            rng_seed=seed_for(state, "commitment_fulfilled", actor.npc_id, goal.goal_id),
+            payload={
+                "commitment_id": goal.goal_id,
+                "with_npc_id": goal.params.get("with_npc_id"),
+                "promised_goal_id": goal.params.get("promised_goal_id"),
+                "location_id": target,
+                "investigate_event_id": investigate_id,
+            },
+        )
+
     for realm in sorted(state.secret_realms.values(), key=lambda item: item.realm_id):
         if realm.entrance_location_id != target or not realm.opened:
             continue
@@ -499,6 +617,21 @@ def handle_attack(state: WorldState, actor: Npc, arguments: dict[str, Any], emit
     if target.location_id != actor.location_id:
         reject("target_not_present", "the target must be at the same location")
 
+    for goal in actor.goals:
+        if goal.status != "active":
+            continue
+        deferred_until = goal.params.get("deferred_until_tick")
+        if not isinstance(deferred_until, int) or deferred_until <= state.tick:
+            continue
+        if goal_target_id(goal) != target_id:
+            continue
+        reject(
+            "commitment_deferred",
+            "an active promise defers hostile action against this target",
+            goal_id=goal.goal_id,
+            until_tick=deferred_until,
+        )
+
     attacker_power = RULESET.power(actor)
     defender_power = RULESET.power(target)
     probability = RULESET.combat_win_probability(attacker_power, defender_power)
@@ -516,7 +649,7 @@ def handle_attack(state: WorldState, actor: Npc, arguments: dict[str, Any], emit
             target.inventory.remove(stolen_item)
             actor.inventory.append(stolen_item)
             state.items[stolen_item].owner_id = actor.npc_id
-        if target.health <= 0.15 and intent == "kill":
+        if target.health <= 0 or (intent == "kill" and target.health <= 0.15):
             target.health = 0.0
             died = True
     else:

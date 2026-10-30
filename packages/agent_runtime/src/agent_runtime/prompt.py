@@ -31,6 +31,11 @@ _INTENT_GUIDE = {
     "enter_secret_realm": '{"realm_id": "<discovered realm id>"}',
     "claim_opportunity": '{"opportunity_id": "<visible opportunity id>"}',
     "attack": '{"target_id": "<visible npc id>", "intent": "kill|subdue|rob"}',
+    "make_commitment": (
+        '{"with_npc_id": "<present npc id>", "promised_goal_id": "<active goal id>", '
+        '"target_location_id": "<known location id>", "until_ticks": 1..365, '
+        '"terms": "<1..200 characters>"}'
+    ),
 }
 
 
@@ -70,6 +75,14 @@ def _user_prompt(obs: NpcObservation) -> str:
             lines.append(f"- [{goal.goal_id}] {goal.kind} (priority {goal.priority:.2f}){params}")
     else:
         lines.append("- none")
+
+    commitments = [goal for goal in active if goal.kind == "commitment"]
+    if commitments:
+        lines.append("\nACTIVE_COMMITMENTS")
+        lines.extend(
+            f"- [{goal.goal_id}] {goal.params}" for goal in commitments
+        )
+        lines.append("- 优先履行这些约定；约定期间不要攻击被暂缓的目标。")
 
     lines.append("\nINVENTORY")
     if obs.inventory:

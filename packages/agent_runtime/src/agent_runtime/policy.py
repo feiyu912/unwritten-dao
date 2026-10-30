@@ -193,10 +193,19 @@ def _revenge_target(observation: NpcObservation) -> tuple[str, str] | None:
         goal for goal in observation.goals if goal.kind == "revenge" and goal.status == "active"
     ]
     for goal in sorted(revenge, key=lambda item: (-item.priority, item.goal_id)):
+        if _deferred(goal, observation.tick):
+            # The NPC promised to hold this grudge until the agreed tick.
+            continue
         target = goal.params.get("target_id") or goal.params.get("target")
         if isinstance(target, str) and target in visible:
             return goal.goal_id, target
     return None
+
+
+def _deferred(goal: ObservedGoal, tick: int) -> bool:
+    """A commitment the NPC itself made defers hostile action against its target."""
+    until_tick = goal.params.get("deferred_until_tick")
+    return isinstance(until_tick, int) and until_tick > tick
 
 
 def _breakthrough_goal(goals: list[ObservedGoal]) -> ObservedGoal | None:
@@ -294,6 +303,8 @@ class RivalryPolicy(UtilityPolicy):
                 if goal.kind == "defeat_rival" and goal.status == "active"
             ]
             for goal in sorted(rivals, key=lambda item: (-item.priority, item.goal_id)):
+                if _deferred(goal, observation.tick):
+                    continue
                 target = goal.params.get("target")
                 if isinstance(target, str) and target in visible:
                     return _proposal(

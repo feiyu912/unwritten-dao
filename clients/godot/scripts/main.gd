@@ -16,6 +16,18 @@ var location_positions: Dictionary = {}
 var current_location_id: String = ""
 var _location_cooldown: float = 0.0
 var _poll_elapsed: float = 0.0
+var _voice: VoiceClient
+var _capture: VoiceCapture
+var _record_button: Button
+var _voice_status: Label
+var _speak_toggle: CheckButton
+var _voice_world_id := ""
+var _voice_npc_id := ""
+var _dialogue_world_id := ""
+var _dialogue_npc_id := ""
+var _record_text := ""
+var _day_runner: AgentDayRunner
+var _resync_requested := false
 
 @onready var world_root: Node3D = $WorldRoot
 @onready var player: CharacterBody3D = $Player
@@ -38,11 +50,25 @@ func _ready() -> void:
 	client.events_received.connect(_on_events)
 	client.command_completed.connect(_on_command_completed)
 	client.dialogue_received.connect(_on_dialogue)
+	client.dialogue_action_proposed.connect(func(intent: String) -> void:
+		_append_log("NPC plans %s; awaiting world validation." % intent)
+	)
 	client.request_failed.connect(_on_request_failed)
 	client.resync_required.connect(_on_resync_required)
+	_day_runner = AgentDayRunner.new()
+	add_child(_day_runner)
+	_day_runner.configure(client)
+	_day_runner.day_completed.connect(func(_snapshot: Dictionary) -> void:
+		_append_log("[color=#9fe3b0]一天过去了。人物已按各自目标行动。[/color]")
+	)
+	_day_runner.failed.connect(func(message: String) -> void:
+		_append_log("[color=#ff8080]时间推进已中止：%s[/color]" % message)
+		_resync_requested = true
+	)
 	talk_button.pressed.connect(_talk)
 	resync_button.pressed.connect(_resync)
 	dialogue_edit.text_submitted.connect(func(_text: String) -> void: _talk())
+	_build_voice_controls()
 	_append_log("[color=#8fd3ff]Connecting to world server…[/color]")
 	client.fetch_snapshot()
 	_move_player_to_spawn()
@@ -51,13 +77,25 @@ func _process(delta: float) -> void:
 	_move_player(delta)
 	_follow_camera()
 	_location_cooldown = maxf(0.0, _location_cooldown - delta)
+	if _resync_requested:
+		if not client.busy and client.fetch_snapshot():
+			_resync_requested = false
+		return
 	_poll_elapsed += delta
 	if _poll_elapsed >= 1.0:
 		_poll_elapsed = 0.0
-		if not client.busy:
+		if not client.busy and not _day_runner.active:
 			client.fetch_events()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		_cancel_voice()
+		dialogue_edit.release_focus()
+		return
+	if _editing_or_recording():
+		return
+	if _day_runner.active or _resync_requested:
+		return
 	if event.is_action_pressed("take"):
 		_take()
 	elif event.is_action_pressed("investigate"):
@@ -114,6 +152,9 @@ func _move_player_to_spawn() -> void:
 	player.position = Vector3(float(xy[0]) * CM_TO_M, 1.0, float(xy[1]) * CM_TO_M)
 
 func _move_player(_delta: float) -> void:
+	if _editing_or_recording() or _day_runner.active or _resync_requested:
+		player.velocity = Vector3.ZERO
+		return
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var velocity := Vector3(input.x, 0, input.y) * PLAYER_SPEED
 	player.velocity = velocity
@@ -187,32 +228,39 @@ func _claim() -> void:
 	_append_log("No visible opportunity here.")
 
 func _talk() -> void:
+	if _day_runner.active or _resync_requested or (_capture != null and _capture.recording):
+		return
 	var message := dialogue_edit.text.strip_edges()
 	if message.is_empty() or client.player_id.is_empty():
 		return
-	var npcs: Dictionary = state.get("npcs", {})
-	for npc_id in npcs:
-		var npc: Dictionary = npcs[npc_id]
-		var same_location: bool = npc.get("location_id") == current_location_id
-		var alive: bool = npc.get("alive", false)
-		if npc_id != client.player_id and same_location and alive:
-			client.send_dialogue(npc_id, message)
+	var npc_id := _nearby_npc_id()
+	if not npc_id.is_empty():
+		if client.send_dialogue(npc_id, message):
+			_cancel_voice()
+			_dialogue_world_id = client.world_id
+			_dialogue_npc_id = npc_id
 			dialogue_edit.text = ""
-			return
+		return
 	_append_log("Nobody here to talk to.")
 
 func _next_day() -> void:
-	client.send_command("advance_time", {"ticks": 1}, "")
+	_cancel_voice()
+	if not _day_runner.start():
+		_append_log("请等待当前行动结束，再推进一天。")
 
 func _resync() -> void:
+	_day_runner.cancel()
+	_cancel_voice()
 	_append_log("Resyncing authoritative snapshot…")
-	client.fetch_snapshot()
+	_resync_requested = true
 
 func _on_snapshot(snapshot: Dictionary) -> void:
 	state = snapshot.get("state", {})
 	var npcs: Dictionary = state.get("npcs", {})
 	var player_npc: Dictionary = npcs.get(client.player_id, {})
 	current_location_id = str(player_npc.get("location_id", ""))
+	if not _voice_world_id.is_empty() and not _voice_context_valid():
+		_cancel_voice()
 	for npc_id in npc_views:
 		if npcs.has(npc_id):
 			npc_views[npc_id].apply_snapshot(npcs[npc_id])
@@ -237,17 +285,140 @@ func _on_command_completed(result: Dictionary) -> void:
 	print("command completed version=%d events=%d" % [client.state_version, events.size()])
 	for event in events:
 		_append_log("[color=#9fe3b0]%s[/color]" % str(event.get("type", "")))
-	client.fetch_snapshot()
+	if not _day_runner.active:
+		client.fetch_snapshot()
 
 func _on_dialogue(reply: String) -> void:
 	_append_log("[color=#e9d18a]%s[/color]" % reply)
+	if not _speak_toggle.button_pressed or _dialogue_world_id != client.world_id:
+		return
+	if not _npc_is_present(_dialogue_npc_id):
+		return
+	_voice_world_id = _dialogue_world_id
+	_voice_npc_id = _dialogue_npc_id
+	if _voice.synthesize(reply):
+		_voice_status.text = "正在生成 NPC 合成语音…"
 
 func _on_request_failed(message: String) -> void:
 	print("request failed: %s" % message)
 	_append_log("[color=#ff8080]%s[/color]" % message)
 
 func _on_resync_required() -> void:
+	_cancel_voice()
 	_append_log("[color=#ffcc66]409: state advanced, resyncing[/color]")
+
+func _build_voice_controls() -> void:
+	_capture = VoiceCapture.new()
+	add_child(_capture)
+	_voice = VoiceClient.new()
+	_voice.configure(client.base_url)
+	add_child(_voice)
+	var row := HBoxContainer.new()
+	row.name = "VoiceControls"
+	$UI/Root/VBox.add_child(row)
+	_record_button = Button.new()
+	_record_button.text = "录音"
+	_record_button.pressed.connect(_toggle_recording)
+	row.add_child(_record_button)
+	var cancel_button := Button.new()
+	cancel_button.text = "取消语音"
+	cancel_button.pressed.connect(_cancel_voice)
+	row.add_child(cancel_button)
+	_speak_toggle = CheckButton.new()
+	_speak_toggle.text = "播放 NPC 合成语音"
+	_speak_toggle.button_pressed = false
+	_speak_toggle.toggled.connect(func(enabled: bool) -> void:
+		if not enabled:
+			_cancel_voice()
+	)
+	row.add_child(_speak_toggle)
+	_voice_status = Label.new()
+	_voice_status.text = "录音后可编辑再发送 · Esc 返回行走"
+	row.add_child(_voice_status)
+	_capture.recording_changed.connect(func(active: bool) -> void:
+		_record_button.text = "停止录音" if active else "录音"
+		_voice_status.text = "正在录音（最多 30 秒）" if active else "录音已停止"
+	)
+	_capture.recording_ready.connect(_on_recording_ready)
+	_capture.capture_failed.connect(_on_voice_failed)
+	_voice.transcript_received.connect(_on_transcript)
+	_voice.speech_received.connect(_on_speech)
+	_voice.request_failed.connect(_on_voice_failed)
+
+func _editing_or_recording() -> bool:
+	return dialogue_edit.has_focus() or (_capture != null and _capture.recording)
+
+func _nearby_npc_id() -> String:
+	var ids: Array = state.get("npcs", {}).keys()
+	ids.sort()
+	for npc_id in ids:
+		if str(npc_id) != client.player_id and _npc_is_present(str(npc_id)):
+			return str(npc_id)
+	return ""
+
+func _npc_is_present(npc_id: String) -> bool:
+	var npcs: Dictionary = state.get("npcs", {})
+	var npc: Dictionary = npcs.get(npc_id, {})
+	return (
+		not npc_id.is_empty() and npc.get("alive", false)
+		and npc.get("location_id", "") == current_location_id
+	)
+
+func _voice_context_valid() -> bool:
+	return _voice_world_id == client.world_id and _npc_is_present(_voice_npc_id)
+
+func _toggle_recording() -> void:
+	if _capture.recording:
+		_capture.stop_recording()
+		return
+	if client.busy or _voice.busy or _day_runner.active or _resync_requested:
+		_voice_status.text = "请等待当前交谈或语音完成"
+		return
+	var npc_id := _nearby_npc_id()
+	if npc_id.is_empty():
+		_voice_status.text = "附近没有可交谈的人物"
+		return
+	_voice_world_id = client.world_id
+	_voice_npc_id = npc_id
+	_record_text = dialogue_edit.text
+	_capture.start_recording()
+
+func _on_recording_ready(wav: PackedByteArray) -> void:
+	if _voice_context_valid() and _voice.transcribe(wav):
+		_voice_status.text = "正在识别；识别后请确认文字再发送"
+
+func _on_transcript(text: String) -> void:
+	if not _voice_context_valid():
+		_cancel_voice()
+		return
+	if dialogue_edit.text != _record_text:
+		_voice_status.text = "保留你已编辑的文字；本次识别结果未覆盖输入"
+		return
+	dialogue_edit.text = text
+	dialogue_edit.grab_focus()
+	dialogue_edit.caret_column = text.length()
+	_voice_status.text = "请确认或编辑文字，再点击交谈发送"
+
+func _on_speech(wav: PackedByteArray) -> void:
+	if _speak_toggle.button_pressed and _voice_context_valid():
+		if _capture.play_reply(wav):
+			_voice_status.text = "正在播放 NPC 合成语音"
+
+func _on_voice_failed(message: String) -> void:
+	_voice_status.text = "语音暂不可用，可继续使用文字交谈"
+	print("voice failed: %s" % message)
+
+func _cancel_voice() -> void:
+	if _capture == null or _voice == null:
+		return
+	_voice.cancel()
+	_capture.cancel_recording()
+	_capture.stop_playback()
+	_voice_world_id = ""
+	_voice_npc_id = ""
+	_dialogue_world_id = ""
+	_dialogue_npc_id = ""
+	_voice_status.text = "语音已取消，可继续文字交谈"
 
 func _append_log(line: String) -> void:
 	event_log.append_text(line + "\n")

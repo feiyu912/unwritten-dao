@@ -23,3 +23,14 @@ class Settings:
 
 
 SETTINGS = Settings.from_env()
+
+
+def provider_extra_headers() -> dict[str, str]:
+    """Parse ``LLM_EXTRA_HEADERS`` (``key=value`` pairs separated by ``,`` or ``;``)."""
+    raw = os.environ.get("LLM_EXTRA_HEADERS", "").strip()
+    headers: dict[str, str] = {}
+    for entry in raw.replace(";", ",").split(","):
+        key, sep, value = entry.partition("=")
+        if sep and key.strip():
+            headers[key.strip()] = value.strip()
+    return headers
